@@ -1,6 +1,6 @@
 # file per creare una toolchain di compilazione
 
-EXE= menu.x # nome del file eseguibile che si vuole creare
+EXE= bin/menu.x # nome del file eseguibile che si vuole creare
 
 # variabile per specificare i compilatori da usare
 AS= as --32 # compilatore di assembly a 32 bit
