@@ -1,6 +1,6 @@
 # file per creare una toolchain di compilazione
 
-EXE= main.x # nome del file eseguibile che si vuole creare
+EXE= menu.x # nome del file eseguibile che si vuole creare
 
 # variabile per specificare i compilatori da usare
 AS= as --32 # compilatore di assembly a 32 bit
@@ -8,7 +8,7 @@ LD= ld -m elf_i386 # linker di assembly
 FLAGS= -gstabs # parametri che vengono passati al compilatore per certi comportamenti
 # in questo caso, abilitiamo il tool di debug
 
-OBJ= obj/main.o obj/scanfd.o obj/printfd.o # dichiaro file oggetto
+OBJ= obj/menu.o obj/scanfd.o obj/printfd.o # dichiaro file oggetto
 
 # il mio target e' l'eseguibile
 # $(..) indica il valore della variabile
@@ -16,8 +16,8 @@ OBJ= obj/main.o obj/scanfd.o obj/printfd.o # dichiaro file oggetto
 $(EXE):  $(OBJ) # perche' esista l'exe deve esistere il file oggetto
 	$(LD) -o $(EXE) $(OBJ) 
 
-obj/main.o: src/main.s
-	$(AS) $(FLAGS) -o obj/main.o src/main.s
+obj/menu.o: src/menu.s
+	$(AS) $(FLAGS) -o obj/menu.o src/menu.s
 
 obj/scanfd.o: src/scanfd.s
 	$(AS) $(FLAGS) -o obj/scanfd.o src/scanfd.s
