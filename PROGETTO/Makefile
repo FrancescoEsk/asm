@@ -28,6 +28,9 @@ obj/printfd.o: src/printfd.s
 clean:
 	rm -f *.o $(EXE) core
 
+r: 
+	./$(EXE)
+
 # VADO NELLA CONSOLE
 # ho fatto il mio file assembly
 # make
