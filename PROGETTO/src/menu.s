@@ -57,7 +57,7 @@ inserimento:
     jmp stampa_richiesta
 
 stampa_zero:
-    movl $4, %eax                   # chiamo la WRITE per scrivere "Select algorithm" contenuto nell'etichetta richiesta
+    movl $4, %eax                   # chiamo la WRITE per scrivere "You selected EDF algorithm" contenuto nell'etichetta richiesta
     movl $1, %ebx                   # esco dalla syscall
     leal print_exit, %ecx      
     movl print_exit_len, %edx
@@ -65,7 +65,7 @@ stampa_zero:
     jmp exit
 
 stampa_uno:
-    movl $4, %eax                   # chiamo la WRITE per scrivere "Select algorithm" contenuto nell'etichetta richiesta
+    movl $4, %eax                   # chiamo la WRITE per scrivere "You selected EDF algorithm" contenuto nell'etichetta richiesta
     movl $1, %ebx                   # esco dalla syscall
     leal print_alg1, %ecx      
     movl print_alg1_len, %edx
@@ -73,7 +73,7 @@ stampa_uno:
     jmp exit
 
 stampa_due:
-    movl $4, %eax                   # chiamo la WRITE per scrivere "Select algorithm" contenuto nell'etichetta richiesta
+    movl $4, %eax                   # chiamo la WRITE per scrivere "You selected HPF algorithm" contenuto nell'etichetta richiesta
     movl $1, %ebx                   # esco dalla syscall
     leal print_alg2, %ecx      
     movl print_alg2_len, %edx
