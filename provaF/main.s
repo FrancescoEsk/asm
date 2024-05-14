@@ -1,11 +1,20 @@
 # file main
 
+.section .data
+
+file:
+    .ascii "Ordini.txt"
+
 .section .text
     .global _start
 
 _start:
+    movl $1, %eax
+    movl $file, %ebx 
+    movl $1, %ecx
     
-    call readf
+    call readfile
+    call printfd
 
     jmp exit
 
