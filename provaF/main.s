@@ -3,7 +3,7 @@
 .section .data
 
 file:
-    .ascii "Ordini.txt"
+    .ascii "./Ordini.txt"
 
 .section .text
     .global _start
