@@ -8,7 +8,7 @@ LD= ld -m elf_i386 # linker di assembly
 FLAGS= -gstabs # parametri che vengono passati al compilatore per certi comportamenti
 # in questo caso, abilitiamo il tool di debug
 
-OBJ= main.o readf.o printfd.o readfile.o readl.o # dichiaro file oggetto
+OBJ= main.o readf.o printfd.o readl.o # dichiaro file oggetto
 
 # il mio target e' l'eseguibile
 # $(..) indica il valore della variabile
@@ -24,9 +24,6 @@ readf.o: readf.s
 
 printfd.o: printfd.s
 	$(AS) $(FLAGS) -o printfd.o printfd.s
-
-readfile.o: readfile.s
-	$(AS) $(FLAGS) -o readfile.o readfile.s
 
 readl.o: readl.s
 	$(AS) $(FLAGS) -o readl.o readl.s
