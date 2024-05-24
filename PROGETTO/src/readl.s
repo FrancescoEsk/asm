@@ -14,10 +14,6 @@
 # str:
 #   .ascii "10,9,121,2\n"
 
-# REGISTRI USATI: A B C D ESI EDI
-
-# RISULTATO IN EAX
-
 .section .text
 .global readl
 

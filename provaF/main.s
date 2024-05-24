@@ -5,8 +5,6 @@
 
 .section .data
 
-file: .ascii "Ordini.txt"
-
 riga: .space 20 # buffer abbastanza grande da contenere una riga (20 caratteri)
 index: .int 0 # indice per tenere traccia della posizione in cui scrivere il carattere in 'riga'
 
@@ -21,9 +19,21 @@ lines: .int 0 # num linee
     .global _start
 
 _start:
+    # CONTROLLO QUANTI PARAMETRI SONO STATI PASSATI PER LINEA DI COMANDO
+    movl (%esp), %eax
+    cmpl $1, %eax # nessun parametro
+    je exit
+
+    cmpl $2, %eax # un file
+    je apriFile
+
+    cmpl $3, %eax # due file
+    je exit
+
+apriFile:
     # apertura file
     movl $5, %eax
-    movl $file, %ebx
+    movl 8(%esp), %ebx
     movl $0, %ecx # MODALITA' READ ONLY
     xorl %edx, %edx
     int $0x80
@@ -106,10 +116,9 @@ close_file:
     
 
 exit:
-    # movl $404, %eax # CODICE ERRORE - 404
-    popl %eax
-    popl %eax
-    popl %eax
+    # ARRIVATI QUI, LO STACK CONTIENE I VALORI DELLE RIGHE DEL FILE
+    # NUMERO RIGHE FILE CONTENUTO IN 'lines'
+
 
     movl $1, %eax 
     xorl %ebx, %ebx # codice di uscita (0)

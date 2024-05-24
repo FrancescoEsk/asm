@@ -49,9 +49,9 @@ exit:
     xorl %ebx, %ebx
     xorl %ecx, %ecx
     xorl %edx, %edx
-    
+
     # azzero anche le variabili in memoria
-    movl $0, count
+    movl $1, count
 
     ret
 
