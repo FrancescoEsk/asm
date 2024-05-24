@@ -57,7 +57,8 @@ read_loop:
 
     # scrivo lo '\n'
     movl index, %ebx 
-    addl riga, %ebx # riga + offset indice ( punto al carattere prossimo )
+    leal riga, %ecx
+    addl %ecx, %ebx # riga + offset indice ( punto al carattere prossimo )
     movb %al, (%ebx) # scrivo nella posizione del carattere prossimo
 
     # converto la stringa in num da 32 bit
