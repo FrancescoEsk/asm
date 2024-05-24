@@ -57,8 +57,7 @@ read_loop:
 
     # scrivo lo '\n'
     movl index, %ebx 
-    leal riga, %ecx
-    addl %ecx, %ebx # riga + offset indice ( punto al carattere prossimo )
+    addl $riga, %ebx # riga + offset indice ( punto al carattere prossimo )
     movb %al, (%ebx) # scrivo nella posizione del carattere prossimo
 
     # converto la stringa in num da 32 bit
@@ -69,22 +68,23 @@ read_loop:
     # reset indice per la prossima riga
     movl $0, index 
 
+    xorl %eax, %eax
+
 reset_riga: # pulisco tutta la riga
-    movl $0, %ebx
-reset_loop:
-    cmpl $20, %ebx
-    je end_reset
-    addl riga, %ebx
+    movl $20, %ecx
+    movl $riga, %ebx
+resetstring_loop:
     movb $0, (%ebx)
-    addl $1, %ebx
-    jmp reset_loop
-end_reset:
+    incl %ebx
+    loop resetstring_loop
+
+    # end reset stringa
     jmp read_loop # ricomincio a leggere il file
 
 next:
     # scrivo il carattere (attualmente in AL) letto in "riga" alla posizione corrente
     movl index, %ebx 
-    addl riga, %ebx # riga + offset indice ( punto al carattere prossimo )
+    addl $riga, %ebx # riga + offset indice ( punto al carattere prossimo )
     movb %al, (%ebx) # scrivo nella posizione del carattere prossimo
 
     # incrementa l'indice
@@ -104,9 +104,14 @@ close_file:
     popl %ebx
     popl %eax
     
-    ret
 
 exit:
     # movl $404, %eax # CODICE ERRORE - 404
+    popl %eax
+    popl %eax
+    popl %eax
 
-    ret
+    movl $1, %eax 
+    xorl %ebx, %ebx # codice di uscita (0)
+    int $0x80
+

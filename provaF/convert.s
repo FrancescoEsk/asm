@@ -8,12 +8,9 @@
 # RISULTATO IN EAX
 
 .section .data
-count:
-    .int 1
 
-.section .bss # var non inizializzate
-temp:
-    .ascii
+count: .int 1
+temp: .space 20
 
 .section .text
     .global convert
@@ -21,7 +18,7 @@ temp:
 .type convert, @function
 
 convert:
-    # salvo la stringa nello stack
+    # salvo la stringa nella memoria
     movl %eax, temp
     xorl %edx, %edx # pulisco edx
     movl $4, %ecx # imposto quante volte eseguire il ciclo
@@ -52,5 +49,9 @@ exit:
     xorl %ebx, %ebx
     xorl %ecx, %ecx
     xorl %edx, %edx
+    
+    # azzero anche le variabili in memoria
+    movl $0, count
+
     ret
 
