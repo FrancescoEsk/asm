@@ -7,7 +7,7 @@
 
 file: .ascii "Ordini.txt"
 
-riga: .byte 20 # buffer abbastanza grande da contenere una riga (20 caratteri)
+riga: .space 20 # buffer abbastanza grande da contenere una riga (20 caratteri)
 index: .int 0 # indice per tenere traccia della posizione in cui scrivere il carattere in 'riga'
 
 buffer: .string ""
