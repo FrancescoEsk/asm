@@ -39,7 +39,7 @@ read_loop:
     # read da file 
     movl $3, %eax 
     movl fd, %ebx
-    movl buffer, %ecx # buffer dove mettere la stringa letto
+    movl $buffer, %ecx # buffer dove mettere la stringa letto
     movl $1, %edx # lunghezza massima della stringa 
     int $0x80
 
