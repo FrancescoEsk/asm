@@ -39,7 +39,9 @@ min2: .int 0 # minimo di HPF (scadenza)
 count: .int 0 # quante volte far girare i loop
 
 countmin: .int 0 # conta quanti minimi trova (EDF)
-rigaEDF: .long 0 # indirizzo stack della riga da stampare (EDF)
+
+
+riga_da_stampare: .long 0 # indirizzo stack della riga da stampare
 
 .section .bss
 
@@ -244,7 +246,7 @@ check_min_EDF:
     jne skip_primo_loop_EDF
     # ho trovato una riga che ha il minimo attuale
     incw countmin # aumento il contatore
-    movl %esp, stampa_EDF # salvo indirizzo stack
+    movl %esp, riga_da_stampare # salvo indirizzo stack
 
 skip_check_min_EDF:
     subl $4, %esp # salgo di stack
@@ -306,7 +308,7 @@ secondo_loop_EDF: # RICERCA DELLA PRIORITA' PIU' ALTA (SOLO DEI MINIMI)
 
     # se eax e' minore di max2, salvo il nuovo max2
     movl %eax, max2
-    movl %esp, stampa_EDF # salvo riga da stampare 
+    movl %esp, riga_da_stampare # salvo riga da stampare 
 
     # anche se avessi due righe con la stessa priorita', stampo sempre l'ultima che trovo, siccome non ha importanza
 
@@ -325,7 +327,7 @@ stampa_EDF: # STAMPA RIGA SCELTA DA ALGORITMO EDF
 
     # ----------------- STAMPA A VIDEO -----------------
     # stampa identificativo
-    movl (stampa_EDF), %eax
+    movl (riga_da_stampare), %eax
     call printvideo
     # stringa da stampare: string_temp 
     movl $4, %eax
@@ -334,17 +336,21 @@ stampa_EDF: # STAMPA RIGA SCELTA DA ALGORITMO EDF
     movl index_string_temp, %edx
 
     #  AUMENTO SLOT TEMPORALI
-    movl (stampa_EDF), %eax
+    movl (riga_da_stampare), %eax
     movl $2, %ebx
     call revert # HO LA DURATA IN EAX
     addl slottemporali, %eax
     movl %eax, slottemporali
 
     # --------------- CALCOLO PENALITA' ---------------
-    
+
+
+    # ------------ SCRIVO NULL NELLA RIGA DELLO STACK STAMPATA -----------
+
+    # jmp a ricomincia algoritmo
 
 stampa_file_EDF: # STAMPA RIGA SU FILE DA ALGORITMO EDF
-
+    
 
 exit: # CHIUSURA PROGRAMMA
     movl $1, %eax 
