@@ -8,7 +8,7 @@ LD= ld -m elf_i386 # linker di assembly
 FLAGS= -gstabs # parametri che vengono passati al compilatore per certi comportamenti
 # in questo caso, abilitiamo il tool di debug
 
-OBJ= main.o printfd.o readl.o convert.o # dichiaro file oggetto
+OBJ= main.o convert.o edf.o menu.o printfd.o printvideo.o readl.o revert.o scanfd.o # dichiaro file oggetto
 
 # il mio target e' l'eseguibile
 # $(..) indica il valore della variabile
@@ -18,15 +18,30 @@ $(EXE):  $(OBJ) # perche' esista l'exe deve esistere il file oggetto
 
 main.o: main.s
 	$(AS) $(FLAGS) -o main.o main.s
+	
+convert.o: convert.s
+	$(AS) $(FLAGS) -o convert.o convert.s
+
+edf.o: edf.s
+	$(AS) $(FLAGS) -o edf.o edf.s
+
+menu.o: menu.s
+	$(AS) $(FLAGS) -o menu.o menu.s
 
 printfd.o: printfd.s
 	$(AS) $(FLAGS) -o printfd.o printfd.s
 
+printvideo.o: printvideo.s
+	$(AS) $(FLAGS) -o printvideo.o printvideo.s
+
 readl.o: readl.s
 	$(AS) $(FLAGS) -o readl.o readl.s
-	
-convert.o: convert.s
-	$(AS) $(FLAGS) -o convert.o convert.s
+
+revert.o: revert.s
+	$(AS) $(FLAGS) -o revert.o revert.s
+
+scanfd.o: scanfd.s
+	$(AS) $(FLAGS) -o scanfd.o scanfd.s
 
 clean:
 	rm -f *.o $(EXE) core

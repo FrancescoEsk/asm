@@ -5,15 +5,36 @@
 
 .section .data
 
+# VARIABILI PER LETTURA FILE
 riga: .space 20 # buffer abbastanza grande da contenere una riga (20 caratteri)
 index: .int 0 # indice per tenere traccia della posizione in cui scrivere il carattere in 'riga'
-
 buffer: .string ""
-
 fd: .int 0
 newline: .byte 10 # valore ascii di '\n'
-
 lines: .int 0 # num linee
+
+# VAR CHE DICE SE DEVO STAMPARE A VIDEO O SCRIVERE SU FILE (0: A VIDEO, 1: SU FILE)
+secondfile: .int 0 
+# FILE SU CUI SCRIVERE OUTPUT ALGORITMO
+file2: .ascii ""
+
+erroreFile: .ascii "Errore: apertura file fallita\n"
+erroreFile_len: .long . - erroreFile
+
+zeroFile: .ascii "Errore: Nessun parametro fornito\n"
+zeroFile_len: .long . - zeroFile
+
+troppiFile: .ascii "Errore: Troppi parametri forniti\n"
+troppiFile_len: .long . - troppiFile
+
+
+# VARIABILI PER ALGORITMO
+slottemporali: .int 0
+
+riga_da_stampare: .long 0 # indirizzo stack della riga da stampare
+
+.section .bss
+
 
 .section .text
     .global _start
@@ -22,15 +43,23 @@ _start:
     # CONTROLLO QUANTI PARAMETRI SONO STATI PASSATI PER LINEA DI COMANDO
     movl (%esp), %eax
     cmpl $1, %eax # nessun parametro
-    je exit
+    je exit_zeroFile
 
     cmpl $2, %eax # un file
     je apriFile
 
-    cmpl $3, %eax # due file
-    je exit
+    # SE SONO ARRIVATO QUI, HO ALMENO DUE PARAMETRI PASSATI
+    incw secondfile # CHECK CHE MI FA SCRIVERE SU FILE
+    movl 12(%esp), %ebx # SALVO PERCORSO DEL FILE
+    movl %ebx, file2
 
-apriFile:
+    cmpl $3, %eax # due file
+    je apriFile
+
+    # SE HO PIU' DI DUE PARAMETRI, ERRORE. CHIUDO PROGRAMMA
+    jmp exit_troppiFile 
+
+apriFile: # APERTURA FILE
     # apertura file
     movl $5, %eax
     movl 8(%esp), %ebx
@@ -40,11 +69,11 @@ apriFile:
 
     # controllo errore
     cmpl $0, %eax
-    jl exit
+    jl exit_erroreFile
 
     movl %eax, fd # salvo il file descriptor
 
-read_loop:
+read_loop: # LETTURA FILE
     # read da file 
     movl $3, %eax 
     movl fd, %ebx
@@ -80,7 +109,7 @@ read_loop:
 
     xorl %eax, %eax
 
-reset_riga: # pulisco tutta la riga
+reset_riga: # PULIZIA STRINGA 
     movl $20, %ecx
     movl $riga, %ebx
 resetstring_loop:
@@ -89,37 +118,95 @@ resetstring_loop:
     loop resetstring_loop
 
     # end reset stringa
-    jmp read_loop # ricomincio a leggere il file
+    jmp read_loop # ricomincio a legkgere il file
 
-next:
+next: # SCRITTURA DA FILE A STRINGA
     # scrivo il carattere (attualmente in AL) letto in "riga" alla posizione corrente
     movl index, %ebx 
     addl $riga, %ebx # riga + offset indice ( punto al carattere prossimo )
     movb %al, (%ebx) # scrivo nella posizione del carattere prossimo
 
-    # incrementa l'indice
+    # incremento l'indice
     addl $1, index
 
     jmp read_loop # continuo a leggere
 
-close_file:
-    pushl %eax
-    pushl %ebx
-    
+close_file: # CHIUSURA FILE
     # chiusura file
     movl $6, %eax
     movl fd, %ebx
     int $0x80
 
-    popl %ebx
-    popl %eax
-    
-
-exit:
+algoritmo:
     # ARRIVATI QUI, LO STACK CONTIENE I VALORI DELLE RIGHE DEL FILE
-    # NUMERO RIGHE FILE CONTENUTO IN 'lines'
+    # NUMERO RIGHE FILE CONTENUTO IN 'lines' (contatore)
+
+    # ---------------------------- INSERIRE STAMPA MENU' PER SCELTA ALGORITMO ----------------------------
+    movl %esp, %eax
+    movl lines, %ebx
+    call edf
+    movl %eax, riga_da_stampare
+
+    jmp stampa # FINE EDF
+
+stampa: # STAMPA RIGA SCELTA DA ALGORITMO EDF
+
+    # controllo se devo stampare a video o su file
+    movl secondfile, %eax
+    cmpl $1, %eax
+    je stampa_file
+
+    # ----------------- STAMPA A VIDEO -----------------
+    # stampa identificativo
+    movl (riga_da_stampare), %eax
+    movl slottemporali, %ebx
+    call printvideo
+    # stringa da stampare e lenght in ecx ed edx
+    movl $4, %eax
+    movl $1, %ebx
+    int $0x80
+
+    #  AUMENTO SLOT TEMPORALI
+    movl (riga_da_stampare), %eax
+    movl $2, %ebx
+    call revert # HO LA DURATA IN EAX
+    addl slottemporali, %eax
+    movl %eax, slottemporali
+
+    # --------------- CALCOLO PENALITA' ---------------
 
 
+    # ------------ SCRIVO NULL NELLA RIGA DELLO STACK STAMPATA -----------
+
+    # jmp a ricomincia algoritmo
+
+stampa_file: # STAMPA RIGA SU FILE DA ALGORITMO EDF
+    
+    
+exit_erroreFile: # MESSAGGI DI ERRORE
+    movl $4, %eax
+    movl $1, %ebx
+    leal erroreFile, %ecx
+    movl erroreFile_len, %edx
+    int $0x80
+    jmp exit
+
+exit_zeroFile: 
+    movl $4, %eax
+    movl $1, %ebx
+    leal zeroFile, %ecx
+    movl zeroFile_len, %edx
+    int $0x80
+    jmp exit
+
+exit_troppiFile:
+    movl $4, %eax
+    movl $1, %ebx
+    leal troppiFile, %ecx
+    movl troppiFile_len, %edx
+    int $0x80
+
+exit: # CHIUSURA PROGRAMMA
     movl $1, %eax 
     xorl %ebx, %ebx # codice di uscita (0)
     int $0x80

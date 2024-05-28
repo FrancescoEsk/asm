@@ -24,6 +24,15 @@ benvenuto_EDF_len: .long . - benvenuto_EDF
 benvenuto_HPF: .ascii "Pianificazione HPF:\n"
 benvenuto_HPF_len: .long . - benvenuto_HPF
 
+erroreFile: .ascii "Errore: apertura file fallita\n"
+erroreFile_len: .long . - erroreFile
+
+zeroFile: .ascii "Errore: Nessun parametro fornito\n"
+zeroFile_len: .long . - zeroFile
+
+troppiFile: .ascii "Errore: Troppi parametri forniti\n"
+troppiFile_len: .long . - troppiFile
+
 
 # VARIABILI PER ALGORITMO
 stackPointer: .long 0 # salvo esp
@@ -53,7 +62,7 @@ _start:
     # CONTROLLO QUANTI PARAMETRI SONO STATI PASSATI PER LINEA DI COMANDO
     movl (%esp), %eax
     cmpl $1, %eax # nessun parametro
-    je exit
+    je exit_zeroFile
 
     cmpl $2, %eax # un file
     je apriFile
@@ -65,7 +74,7 @@ _start:
     je apriFile
 
     # SE HO PIU' DI DUE PARAMETRI, ERRORE. CHIUDO PROGRAMMA
-    jmp exit 
+    jmp exit_troppiFile 
 
 apriFile: # APERTURA FILE
     # apertura file
@@ -77,7 +86,7 @@ apriFile: # APERTURA FILE
 
     # controllo errore
     cmpl $0, %eax
-    jl algoritmo
+    jl exit_erroreFile
 
     movl %eax, fd # salvo il file descriptor
 
@@ -126,7 +135,7 @@ resetstring_loop:
     loop resetstring_loop
 
     # end reset stringa
-    jmp read_loop # ricomincio a leggere il file
+    jmp read_loop # ricomincio a legkgere il file
 
 next: # SCRITTURA DA FILE A STRINGA
     # scrivo il carattere (attualmente in AL) letto in "riga" alla posizione corrente
@@ -318,7 +327,9 @@ skip_secondo_loop_EDF:
     movl count, %ecx
     loop secondo_loop_EDF
 
-stampa_EDF: # STAMPA RIGA SCELTA DA ALGORITMO EDF
+    jmp stampa # FINE EDF
+
+stampa: # STAMPA RIGA SCELTA DA ALGORITMO EDF
 
     # controllo se devo stampare a video o su file
     movl secondfile, %eax
@@ -349,8 +360,31 @@ stampa_EDF: # STAMPA RIGA SCELTA DA ALGORITMO EDF
 
     # jmp a ricomincia algoritmo
 
-stampa_file_EDF: # STAMPA RIGA SU FILE DA ALGORITMO EDF
+stampa_file: # STAMPA RIGA SU FILE DA ALGORITMO EDF
     
+    
+exit_erroreFile: # MESSAGGI DI ERRORE
+    movl $4, %eax
+    movl $1, %ebx
+    leal erroreFile, %ecx
+    movl erroreFile_len, %edx
+    int $0x80
+    jmp exit
+
+exit_zeroFile: 
+    movl $4, %eax
+    movl $1, %ebx
+    leal zeroFile, %ecx
+    movl zeroFile_len, %edx
+    int $0x80
+    jmp exit
+
+exit_troppiFile:
+    movl $4, %eax
+    movl $1, %ebx
+    leal troppiFile, %ecx
+    movl troppiFile_len, %edx
+    int $0x80
 
 exit: # CHIUSURA PROGRAMMA
     movl $1, %eax 
