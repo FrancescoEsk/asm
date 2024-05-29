@@ -30,6 +30,8 @@ print_alg2:
 print_alg2_len:
     .long . - print_alg2
 
+valore_ebx:
+
 
 .section .text
 .global menu
@@ -80,11 +82,8 @@ stampa_due:
     leal print_alg2, %ecx      
     movl print_alg2_len, %edx
     int $0x80
-    jmp exit
 
 
 exit:
-    movl $1,%eax
-    movl $0,%ebx
-    int $0x080
+    ret
 
