@@ -32,10 +32,11 @@ troppiFile_len: .long . - troppiFile
 slottemporali: .int 0
 algo: .int 0
 
-riga_da_stampare: .long 0 # indirizzo stack della riga da stampare
+riga_da_printare: .long 0 # indirizzo stack della riga da stampare
+output_algoritmo: .ascii ""
+stackDelete: .long 0
 
 .section .bss
-
 
 .section .text
     .global _start
@@ -158,7 +159,10 @@ algoritmo_edf:
     movl %esp, %eax # passo esp
     movl lines, %ebx # passo num linee
     call edf
-    movl %eax, riga_da_stampare # risultato in riga_da_stampare
+    # salvo ind. stack
+    movl %eax, stackDelete
+    movl (%eax), %eax
+    movl %eax, riga_da_printare # risultato in riga_da_printare
 
     jmp stampa # FINE EDF
 
@@ -167,12 +171,11 @@ algoritmo_hpf:
     movl %esp, %eax # passo esp
     movl lines, %ebx # passo num linee
     # call hpf
-    movl %eax, riga_da_stampare # risultato in riga_da_stampare
+    movl %eax, riga_da_printare # risultato in riga_da_printare
 
     # jmp stampa (ma e' successivo quindi non serve)
 
 stampa: # STAMPA RIGA SCELTA DA ALGORITMO
-
     # controllo se devo stampare a video o su file
     movl secondfile, %eax
     cmpl $1, %eax
@@ -180,25 +183,29 @@ stampa: # STAMPA RIGA SCELTA DA ALGORITMO
 
     # ----------------- STAMPA A VIDEO -----------------
     # stampa identificativo
-    movl (riga_da_stampare), %eax
+    movl riga_da_printare, %eax
     movl slottemporali, %ebx
+    leal output_algoritmo, %ecx
     call printvideo
-    # stringa da stampare e lenght in ecx ed edx
+    # output_algoritmo da stampare lenght in edx (stringa gia' modificata da funzione)
     movl $4, %eax
     movl $1, %ebx
+    leal output_algoritmo, %ecx
     int $0x80
 
     #  AUMENTO SLOT TEMPORALI
-    movl (riga_da_stampare), %eax
+    movl riga_da_printare, %eax
     movl $2, %ebx
     call revert # HO LA DURATA IN EAX
     addl slottemporali, %eax
     movl %eax, slottemporali
 
     # --------------- CALCOLO PENALITA' ---------------
+    
 
-
-    # ------------ SCRIVO NULL NELLA RIGA DELLO STACK STAMPATA -----------
+    # ------------ AZZERO LA RIGA DELLO STACK STAMPATA -----------
+    movl stackDelete, %eax
+    movl $0, (%eax)
 
     jmp ricomincia
 
