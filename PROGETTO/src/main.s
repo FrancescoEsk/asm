@@ -18,12 +18,6 @@ secondfile: .int 0
 # FILE SU CUI SCRIVERE OUTPUT ALGORITMO
 file2: .ascii ""
 
-benvenuto_EDF: .ascii "Pianificazione EDF:\n"
-benvenuto_EDF_len: .long . - benvenuto_EDF
-
-benvenuto_HPF: .ascii "Pianificazione HPF:\n"
-benvenuto_HPF_len: .long . - benvenuto_HPF
-
 erroreFile: .ascii "Errore: apertura file fallita\n"
 erroreFile_len: .long . - erroreFile
 
@@ -35,25 +29,14 @@ troppiFile_len: .long . - troppiFile
 
 
 # VARIABILI PER ALGORITMO
-stackPointer: .long 0 # salvo esp
 slottemporali: .int 0
+algo: .int 0
 
-
-min: .int 0 # minimo di EDF
-max2: .int 0 # max di EDF (priorita')
-
-max: .int 0 # massimo di HPF
-min2: .int 0 # minimo di HPF (scadenza)
-
-count: .int 0 # quante volte far girare i loop
-
-countmin: .int 0 # conta quanti minimi trova (EDF)
-
-
-riga_da_stampare: .long 0 # indirizzo stack della riga da stampare
+riga_da_printare: .long 0 # indirizzo stack della riga da stampare
+output_algoritmo: .ascii ""
+stackDelete: .long 0
 
 .section .bss
-
 
 .section .text
     .global _start
@@ -69,7 +52,9 @@ _start:
 
     # SE SONO ARRIVATO QUI, HO ALMENO DUE PARAMETRI PASSATI
     incw secondfile # CHECK CHE MI FA SCRIVERE SU FILE
-    movl 12(%esp), file2 # SALVO PERCORSO DEL FILE
+    movl 12(%esp), %ebx # SALVO PERCORSO DEL FILE
+    movl %ebx, file2
+
     cmpl $3, %eax # due file
     je apriFile
 
@@ -154,214 +139,87 @@ close_file: # CHIUSURA FILE
     movl fd, %ebx
     int $0x80
 
-algoritmo:
+menu:
     # ARRIVATI QUI, LO STACK CONTIENE I VALORI DELLE RIGHE DEL FILE
     # NUMERO RIGHE FILE CONTENUTO IN 'lines' (contatore)
 
     # ---------------------------- INSERIRE STAMPA MENU' PER SCELTA ALGORITMO ----------------------------
+
+scelta_algoritmo:
+    # scelta algoritmo modifica la var. 'algo' che vale 0 se si sceglie edf, e 1 se si sceglie hpf
     
+    # ---------------------- DA TOGLIERE I COMMENTI --------------------
 
-EDF: # ALGORITMO EDF
-    # stampa benvenuto
-    movl $4, %eax
-    movl $1, %ebx
-    leal benvenuto_EDF, %ecx
-    movl benvenuto_EDF_len, %edx
+    # movl algo, %eax
+    # cmpl $0, %eax
+    # jne hpf
 
-    movl $0, min # azzero
-
-    # INIZIALIZZO IL CONTATORE
-    movl lines, %eax
-    movl %eax, count
-
-    # SALVO STACK POINTER
-    movl %esp, stackPointer
-
-    # NB: LINES VALE 1 IN PIU' DI QUANTO DEVO DECREMENTARE LO STACK
-    movl $4, %edx # grandezza di una riga dello stack
-
-    decl %eax # quindi decremento eax (ha valore lines) di 1
-
-    mull %edx # es: se ho 3 linee, e' come se facessi $4 * (3-1) = 8 --> 8(%esp)
-
-    addl %eax, %esp # adesso esp punta alla prima riga che avevo messo sullo stack
-
-
-    movl lines, %ecx
-    movl %ecx, count
-
-    # pulisco i registri
-    xorl %eax, %eax
-    xorl %ebx, %ebx
-    xorl %edx, %edx
-
-primo_loop_EDF: # RICERCA DEL MINIMO TRA LE RIGHE
-
-    # DA AGGIUNGERE CHE SE LA RIGA CHE STO CONTROLLANDO E' VUOTA, SALTO TALE GIRO DI LOOP
-
-    movl %ecx, count
-
-    movl (%esp), %eax # leggo valore dallo stack
-    movl $3, %ebx # scelgo SCADENZA
-    call revert
-    # in eax ho la scadenza
-    cmpl min, %eax 
-    jge skip_primo_loop_EDF
-    # se eax e' maggiore di min, salvo il nuovo min
-    movl %eax, min
-
-skip_primo_loop_EDF:
-    subl $4, %esp # salgo di stack
-
-    movl count, %ecx
-    loop primo_loop_EDF
-
-fine_primo_loop_EDF: # ARRIVATI QUI, IN min HO IL MINIMO TRA LE RIGHE
-    # ------------------ DEVO CAPIRE QUANTE RIGHE POSSIEDONO IL MINIMO TROVATO ----------------------
-
-    movl $0, countmin # azzero
-
-    movl stackPointer, %esp # ripristino stack pointer
-
-    # INIZIALIZZO IL CONTATORE
-    movl lines, %eax
-    movl %eax, count
-
-    # NB: LINES VALE 1 IN PIU' DI QUANTO DEVO DECREMENTARE LO STACK
-    movl $4, %edx # grandezza di una riga dello stack
-
-    decl %eax # quindi decremento eax (ha valore lines) di 1
-
-    mull %edx # es: se ho 3 linee, e' come se facessi $4 * (3-1) = 8 --> 8(%esp)
-
-    addl %eax, %esp # adesso esp punta alla prima riga che avevo messo sullo stack
-
-    movl lines, %ecx
-    movl %ecx, count
-
-    # pulisco i registri
-    xorl %eax, %eax
-    xorl %ebx, %ebx
-    xorl %edx, %edx
-
-check_min_EDF:
-    movl %ecx, count
-
-    movl (%esp), %eax # leggo valore dallo stack
-    movl $3, %ebx # scelgo SCADENZA
-    call revert
-    # in eax ho la scadenza
-    cmpl min, %eax 
-    jne skip_primo_loop_EDF
-    # ho trovato una riga che ha il minimo attuale
-    incw countmin # aumento il contatore
-    movl %esp, riga_da_stampare # salvo indirizzo stack
-
-skip_check_min_EDF:
-    subl $4, %esp # salgo di stack
-
-    movl count, %ecx
-    loop check_min_EDF
-
-seconda_parte_EDF: # CONTROLLO DELLE PRIORITA' (NEL CASO IL MINIMO E' PIU' DI 1)
-    movl $0, max2 # azzero
-
-    movl stackPointer, %esp # ripristino stack pointer
-
-    # CONTROLLO SE DEVO ESEGUIRE IL SECONDO LOOP O MENO
-    movl countmin, %eax
-    cmpl $2, eax
-    jl stampa_EDF # se ho solo un minimo vado diretto a stampare
-
-    # --------------------- CASO IN CUI DEVO FARE IL SECONDO CHECK (PRIORITA') ------------------------
-    # INIZIALIZZO IL CONTATORE
-    movl lines, %eax
-    movl %eax, count
-
-    # NB: LINES VALE 1 IN PIU' DI QUANTO DEVO DECREMENTARE LO STACK
-    movl $4, %edx # grandezza di una riga dello stack
-
-    decl %eax # quindi decremento eax (ha valore lines) di 1
-
-    mull %edx # es: se ho 3 linee, e' come se facessi $4 * (3-1) = 8 --> 8(%esp)
-
-    addl %eax, %esp # adesso esp punta alla prima riga che avevo messo sullo stack
-
-    movl lines, %ecx
-    movl %ecx, count
-
-    # pulisco i registri
-    xorl %eax, %eax
-    xorl %ebx, %ebx
-    xorl %edx, %edx
-
-secondo_loop_EDF: # RICERCA DELLA PRIORITA' PIU' ALTA (SOLO DEI MINIMI)
-    movl %ecx, count
-
-    # ------------- prima controllo se fa parte dei minimi -------------------
-    movl (%esp), %eax # leggo valore dallo stack
-    movl $3, %ebx # scelgo SCADENZA
-    call revert
-    # in eax ho la scadenza
-    cmpl min, %eax
-    jne skip_secondo_loop_EDF # se non e' un minimo, salto diretto
-
-    # ---------------- se fa parte dei minimi, controllo priorita' ----------------
-    movl (%esp), %eax # leggo valore dallo stack
-    movl $4, %ebx # scelgo PRIORITA'
-    call revert
-    # in eax ho la priorita'
-
-    cmpl max2, %eax 
-    jge skip_secondo_loop_EDF
-
-    # se eax e' minore di max2, salvo il nuovo max2
-    movl %eax, max2
-    movl %esp, riga_da_stampare # salvo riga da stampare 
-
-    # anche se avessi due righe con la stessa priorita', stampo sempre l'ultima che trovo, siccome non ha importanza
-
-skip_secondo_loop_EDF:
-    subl $4, %esp # salgo di stack
-
-    movl count, %ecx
-    loop secondo_loop_EDF
+algoritmo_edf:
+    # scelta EDF
+    movl %esp, %eax # passo esp
+    movl lines, %ebx # passo num linee
+    call edf
+    # salvo ind. stack
+    movl %eax, stackDelete
+    movl (%eax), %eax
+    movl %eax, riga_da_printare # risultato in riga_da_printare
 
     jmp stampa # FINE EDF
 
-stampa: # STAMPA RIGA SCELTA DA ALGORITMO EDF
+algoritmo_hpf:
+    # scelta HPF
+    movl %esp, %eax # passo esp
+    movl lines, %ebx # passo num linee
+    # call hpf
+    movl %eax, riga_da_printare # risultato in riga_da_printare
 
+    # jmp stampa (ma e' successivo quindi non serve)
+
+stampa: # STAMPA RIGA SCELTA DA ALGORITMO
     # controllo se devo stampare a video o su file
     movl secondfile, %eax
     cmpl $1, %eax
-    je stampa_file_EDF
+    je stampa_file
 
     # ----------------- STAMPA A VIDEO -----------------
     # stampa identificativo
-    movl (riga_da_stampare), %eax
+    movl riga_da_printare, %eax
+    movl slottemporali, %ebx
+    leal output_algoritmo, %ecx
     call printvideo
-    # stringa da stampare: string_temp 
+    # output_algoritmo da stampare lenght in edx (stringa gia' modificata da funzione)
     movl $4, %eax
     movl $1, %ebx
-    leal string_temp, %ecx
-    movl index_string_temp, %edx
+    leal output_algoritmo, %ecx
+    int $0x80
 
     #  AUMENTO SLOT TEMPORALI
-    movl (riga_da_stampare), %eax
+    movl riga_da_printare, %eax
     movl $2, %ebx
     call revert # HO LA DURATA IN EAX
     addl slottemporali, %eax
     movl %eax, slottemporali
 
     # --------------- CALCOLO PENALITA' ---------------
+    
 
+    # ------------ AZZERO LA RIGA DELLO STACK STAMPATA -----------
+    movl stackDelete, %eax
+    movl $0, (%eax)
 
-    # ------------ SCRIVO NULL NELLA RIGA DELLO STACK STAMPATA -----------
-
-    # jmp a ricomincia algoritmo
+    jmp ricomincia
 
 stampa_file: # STAMPA RIGA SU FILE DA ALGORITMO EDF
     
+
+ricomincia:
+    # se ci sono ancora righe da stampare (----------------- DA AGGIUNGERE !!! --------------)
+    
+    jmp scelta_algoritmo
+
+    # altrimenti ristampo il menu'
+    jmp menu
+
     
 exit_erroreFile: # MESSAGGI DI ERRORE
     movl $4, %eax
