@@ -1,14 +1,14 @@
 # ALGORITMO EDF
 
-# PARAMETRI: ESP, lines
+# PARAMETRI: ebp, lines
 .section .data
 
 lines: .int 0 # num linee
 
-stackPointer: .long 0 # salvo esp
-stackPointer_funzione: .long 0 # salvo stack pointer di inizio funzione ( per RET )
+basePointer: .long 0 # salvo ebp
+basePointer_funzione: .long 0 # salvo stack pointer di inizio funzione ( per RET )
 
-min: .int 0 # minimo di EDF
+min: .int 101 # minimo di EDF
 max2: .int 0 # max di EDF (priorita')
 
 count: .int 0 # quante volte far girare i loop
@@ -27,13 +27,12 @@ riga_da_stampare: .long 0 # indirizzo stack della riga da stampare
 .type edf, @function
 
 edf: 
-    movl %esp, stackPointer_funzione # salvo stack pointer funzione
+    movl %ebp, basePointer_funzione # salvo stack pointer funzione
     # salvo parametri
-    movl %eax, stackPointer
     movl %ebx, lines
 
-    # imposto nuovo stackPointer
-    movl %eax, %esp
+    # imposto nuovo basePointer
+    movl %eax, %ebp
 
     # stampa benvenuto
     movl $4, %eax
@@ -41,8 +40,6 @@ edf:
     leal benvenuto_EDF, %ecx
     movl benvenuto_EDF_len, %edx
     int $0x80
-
-    movl $101, min # azzero
 
     # INIZIALIZZO IL CONTATORE
     movl lines, %eax
@@ -53,10 +50,12 @@ edf:
 
     decl %eax # quindi decremento eax (ha valore lines) di 1
 
-    mull %edx # es: se ho 3 linee, e' come se facessi $4 * (3-1) = 8 --> 8(%esp)
+    mull %edx # es: se ho 3 linee, e' come se facessi $4 * (3-1) = 8 --> 8(%ebp)
 
-    addl %eax, %esp # adesso esp punta alla prima riga che avevo messo sullo stack
+    addl %eax, %ebp # adesso ebp punta alla prima riga che avevo messo sullo stack
 
+    # SALVO EBP CHE PUNTA ALLA PRIMA VARIABILE IN FONDO ALLO STACK 
+    movl %ebp, basePointer
 
     movl lines, %ecx
 
@@ -67,7 +66,7 @@ edf:
 
 primo_loop_EDF: # RICERCA DEL MINIMO TRA LE RIGHE
     movl %ecx, count
-    movl (%esp), %eax # leggo valore dallo stack
+    movl (%ebp), %eax # leggo valore dallo stack
 
     # SE LA RIGA CHE STO CONTROLLANDO E' VUOTA, SALTO TALE GIRO DI LOOP
     cmpl $0, %eax
@@ -82,30 +81,14 @@ primo_loop_EDF: # RICERCA DEL MINIMO TRA LE RIGHE
     movl %eax, min
 
 skip_primo_loop_EDF:
-    subl $4, %esp # salgo di stack
+    subl $4, %ebp # salgo di stack
 
     movl count, %ecx
     loop primo_loop_EDF
 
 fine_primo_loop_EDF: # ARRIVATI QUI, IN min HO IL MINIMO TRA LE RIGHE
     # ------------------ DEVO CAPIRE QUANTE RIGHE POSSIEDONO IL MINIMO TROVATO ----------------------
-
-    movl $0, countmin # azzero
-
-    movl stackPointer, %esp # ripristino stack pointer
-
-    # INIZIALIZZO IL CONTATORE
-    movl lines, %eax
-    movl %eax, count
-
-    # NB: LINES VALE 1 IN PIU' DI QUANTO DEVO DECREMENTARE LO STACK
-    movl $4, %edx # grandezza di una riga dello stack
-
-    decl %eax # quindi decremento eax (ha valore lines) di 1
-
-    mull %edx # es: se ho 3 linee, e' come se facessi $4 * (3-1) = 8 --> 8(%esp)
-
-    addl %eax, %esp # adesso esp punta alla prima riga che avevo messo sullo stack
+    movl basePointer, %ebp # ripristino stack pointer
 
     movl lines, %ecx
     movl %ecx, count
@@ -117,7 +100,7 @@ fine_primo_loop_EDF: # ARRIVATI QUI, IN min HO IL MINIMO TRA LE RIGHE
 
 check_min_EDF:
     movl %ecx, count
-    movl (%esp), %eax # leggo valore dallo stack
+    movl (%ebp), %eax # leggo valore dallo stack
 
     # SE LA RIGA CHE STO CONTROLLANDO E' VUOTA, SALTO TALE GIRO DI LOOP
     cmpl $0, %eax
@@ -127,21 +110,19 @@ check_min_EDF:
     call revert
     # in eax ho la scadenza
     cmpl min, %eax 
-    jne skip_primo_loop_EDF
+    jne skip_check_min_EDF
     # ho trovato una riga che ha il minimo attuale
     incw countmin # aumento il contatore
-    movl %esp, riga_da_stampare # salvo indirizzo stack
+    movl %ebp, riga_da_stampare # salvo indirizzo stack
 
 skip_check_min_EDF:
-    subl $4, %esp # salgo di stack
+    subl $4, %ebp # salgo di stack
 
     movl count, %ecx
     loop check_min_EDF
 
 seconda_parte_EDF: # CONTROLLO DELLE PRIORITA' (NEL CASO IL MINIMO E' PIU' DI 1)
-    movl $0, max2 # azzero
-
-    movl stackPointer, %esp # ripristino stack pointer
+    movl basePointer, %ebp # ripristino stack pointer
 
     # CONTROLLO SE DEVO ESEGUIRE IL SECONDO LOOP O MENO
     movl countmin, %eax
@@ -149,19 +130,6 @@ seconda_parte_EDF: # CONTROLLO DELLE PRIORITA' (NEL CASO IL MINIMO E' PIU' DI 1)
     jl stampa_EDF # se ho solo un minimo vado diretto a stampare
 
     # --------------------- CASO IN CUI DEVO FARE IL SECONDO CHECK (PRIORITA') ------------------------
-    # INIZIALIZZO IL CONTATORE
-    movl lines, %eax
-    movl %eax, count
-
-    # NB: LINES VALE 1 IN PIU' DI QUANTO DEVO DECREMENTARE LO STACK
-    movl $4, %edx # grandezza di una riga dello stack
-
-    decl %eax # quindi decremento eax (ha valore lines) di 1
-
-    mull %edx # es: se ho 3 linee, e' come se facessi $4 * (3-1) = 8 --> 8(%esp)
-
-    addl %eax, %esp # adesso esp punta alla prima riga che avevo messo sullo stack
-
     movl lines, %ecx
     movl %ecx, count
 
@@ -172,7 +140,7 @@ seconda_parte_EDF: # CONTROLLO DELLE PRIORITA' (NEL CASO IL MINIMO E' PIU' DI 1)
 
 secondo_loop_EDF: # RICERCA DELLA PRIORITA' PIU' ALTA (SOLO DEI MINIMI)
     movl %ecx, count
-    movl (%esp), %eax # leggo valore dallo stack
+    movl (%ebp), %eax # leggo valore dallo stack
 
     # SE LA RIGA CHE STO CONTROLLANDO E' VUOTA, SALTO TALE GIRO DI LOOP
     cmpl $0, %eax
@@ -186,7 +154,7 @@ secondo_loop_EDF: # RICERCA DELLA PRIORITA' PIU' ALTA (SOLO DEI MINIMI)
     jne skip_secondo_loop_EDF # se non e' un minimo, salto diretto
 
     # ---------------- se fa parte dei minimi, controllo priorita' ----------------
-    movl (%esp), %eax # leggo valore dallo stack
+    movl (%ebp), %eax # leggo valore dallo stack
     movl $4, %ebx # scelgo PRIORITA'
     call revert
     # in eax ho la priorita'
@@ -196,12 +164,12 @@ secondo_loop_EDF: # RICERCA DELLA PRIORITA' PIU' ALTA (SOLO DEI MINIMI)
 
     # se eax e' minore di max2, salvo il nuovo max2
     movl %eax, max2
-    movl %esp, riga_da_stampare # salvo riga da stampare 
+    movl %ebp, riga_da_stampare # salvo riga da stampare 
 
     # anche se avessi due righe con la stessa priorita', stampo sempre l'ultima che trovo, siccome non ha importanza
 
 skip_secondo_loop_EDF:
-    subl $4, %esp # salgo di stack
+    subl $4, %ebp # salgo di stack
 
     movl count, %ecx
     loop secondo_loop_EDF
@@ -209,8 +177,7 @@ skip_secondo_loop_EDF:
 stampa_EDF:
     # devo ritornare : riga_da_stampare
     movl riga_da_stampare, %eax
-    movl stackPointer_funzione, %esp
+    movl basePointer_funzione, %ebp
 
     ret 
-
 

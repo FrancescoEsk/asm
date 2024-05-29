@@ -30,6 +30,7 @@ troppiFile_len: .long . - troppiFile
 
 # VARIABILI PER ALGORITMO
 slottemporali: .int 0
+algo: .int 0
 
 riga_da_stampare: .long 0 # indirizzo stack della riga da stampare
 
@@ -137,19 +138,40 @@ close_file: # CHIUSURA FILE
     movl fd, %ebx
     int $0x80
 
-algoritmo:
+menu:
     # ARRIVATI QUI, LO STACK CONTIENE I VALORI DELLE RIGHE DEL FILE
     # NUMERO RIGHE FILE CONTENUTO IN 'lines' (contatore)
 
     # ---------------------------- INSERIRE STAMPA MENU' PER SCELTA ALGORITMO ----------------------------
-    movl %esp, %eax
-    movl lines, %ebx
+
+scelta_algoritmo:
+    # scelta algoritmo modifica la var. 'algo' che vale 0 se si sceglie edf, e 1 se si sceglie hpf
+    
+    # ---------------------- DA TOGLIERE I COMMENTI --------------------
+
+    # movl algo, %eax
+    # cmpl $0, %eax
+    # jne hpf
+
+algoritmo_edf:
+    # scelta EDF
+    movl %esp, %eax # passo esp
+    movl lines, %ebx # passo num linee
     call edf
-    movl %eax, riga_da_stampare
+    movl %eax, riga_da_stampare # risultato in riga_da_stampare
 
     jmp stampa # FINE EDF
 
-stampa: # STAMPA RIGA SCELTA DA ALGORITMO EDF
+algoritmo_hpf:
+    # scelta HPF
+    movl %esp, %eax # passo esp
+    movl lines, %ebx # passo num linee
+    # call hpf
+    movl %eax, riga_da_stampare # risultato in riga_da_stampare
+
+    # jmp stampa (ma e' successivo quindi non serve)
+
+stampa: # STAMPA RIGA SCELTA DA ALGORITMO
 
     # controllo se devo stampare a video o su file
     movl secondfile, %eax
@@ -178,10 +200,19 @@ stampa: # STAMPA RIGA SCELTA DA ALGORITMO EDF
 
     # ------------ SCRIVO NULL NELLA RIGA DELLO STACK STAMPATA -----------
 
-    # jmp a ricomincia algoritmo
+    jmp ricomincia
 
 stampa_file: # STAMPA RIGA SU FILE DA ALGORITMO EDF
     
+
+ricomincia:
+    # se ci sono ancora righe da stampare (----------------- DA AGGIUNGERE !!! --------------)
+    
+    jmp scelta_algoritmo
+
+    # altrimenti ristampo il menu'
+    jmp menu
+
     
 exit_erroreFile: # MESSAGGI DI ERRORE
     movl $4, %eax
