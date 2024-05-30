@@ -9,7 +9,7 @@
 
 .section .data
 
-count: .int 1
+convert_count: .int 1
 temp: .space 20
 
 .section .text
@@ -18,6 +18,9 @@ temp: .space 20
 .type convert, @function
 
 convert:
+    # ripristino le variabili in memoria
+    movl $1, convert_count
+
     # salvo la stringa nella memoria
     movl %eax, temp
     xorl %edx, %edx # pulisco edx
@@ -31,27 +34,32 @@ redo:
 
     # leggo dalla stringa il numero
     movl temp, %eax # ricarico la stringa
-    movl count, %ebx # impost offset
+    movl convert_count, %ebx # impost offset
     call readl
 
     popl %edx # riottengo il numero
     addl %eax, %edx # aggiungo il numero
     
-    incl count # aumento offset
+    incl convert_count # aumento offset
 
     popl %ecx
     loop redo # loop in base a ecx
 
 exit: 
     movl %edx, %eax # metto il risultato in eax
+    
+# PULIZIA temp 
+    movl $20, %ecx
+    movl $temp, %ebx
+resettemp_loop:
+    movb $0, (%ebx)
+    incl %ebx
+    loop resettemp_loop
 
     # pulisco i registri usati
     xorl %ebx, %ebx
     xorl %ecx, %ecx
     xorl %edx, %edx
-
-    # azzero anche le variabili in memoria
-    movl $1, count
 
     ret
 

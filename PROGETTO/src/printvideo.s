@@ -104,7 +104,7 @@ exit:
     # azzero var
     movl $0, index_temp
     movl $0, check
-
+    
 
     ret
 

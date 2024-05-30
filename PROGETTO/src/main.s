@@ -38,10 +38,10 @@ slottemporali: .int 0
 penalty: .long 0
 algo: .int 0
 
-riga_da_printare: .long 0 # riga da stampare a 32 bit
-output_algoritmo: .ascii ""
-
 giri_algoritmo: .int 0
+
+riga_da_printare: .long 0 # riga da stampare a 32 bit
+output_algoritmo: .byte 10
 
 .section .bss
 
@@ -146,6 +146,18 @@ close_file: # CHIUSURA FILE
     movl fd, %ebx
     int $0x80
 
+    # reset indice per la prossima riga (quando rileggero' il file)
+    movl $0, index 
+
+    xorl %eax, %eax
+reset_riga2: # PULIZIA STRINGA 
+    movl $20, %ecx
+    movl $riga, %ebx
+resetstring_loop2:
+    movb $0, (%ebx)
+    incl %ebx
+    loop resetstring_loop2
+
 stampa_menu:
     # ARRIVATI QUI, LO STACK CONTIENE I VALORI DELLE RIGHE DEL FILE
     # NUMERO RIGHE FILE CONTENUTO IN 'lines' (contatore) -> setto quindi il num giri dell'algoritmo
@@ -179,10 +191,10 @@ algoritmo_hpf:
     # scelta HPF
     movl %esp, %eax # passo esp
     movl lines, %ebx # passo num linee
-    # call hpf
+    call hpf
     movl %eax, riga_da_printare # risultato in riga_da_printare
 
-    # jmp stampa (ma e' successivo quindi non serve)
+    # FINE HPF
 
 stampa: # STAMPA RIGA SCELTA DA ALGORITMO
     # controllo se devo stampare a video o su file
@@ -231,7 +243,7 @@ stampa: # STAMPA RIGA SCELTA DA ALGORITMO
 
 skip_penalty:
     # DECREMENTO IL NUM DI GIRI ALGORITMO (PERCHE' HO 'TOLTO' UNA LINEA DA CONTROLLARE)
-    decl giri_algoritmo
+    decw giri_algoritmo
 
     jmp ricomincia
 
@@ -285,7 +297,6 @@ pulisci_stack:
 
     # azzero le var per ricominciare
     movl $0, lines
-    movl $0, index
     movl $0, slottemporali
     movl $0, penalty
 

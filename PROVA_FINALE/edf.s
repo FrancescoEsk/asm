@@ -1,23 +1,23 @@
 # ALGORITMO EDF
 
-# PARAMETRI: ebp, lines
+# PARAMETRI: ebp, edf_lines
 .section .data
 
-lines: .int 0 # num linee
+edf_lines: .int 0 # num linee
 
-basePointer: .long 0 # salvo ebp
-basePointer_funzione: .long 0 # salvo stack pointer di inizio funzione ( per RET )
+edf_basePointer: .long 0 # salvo ebp
+edf_basePointer_funzione: .long 0 # salvo stack pointer di inizio funzione ( per RET )
 
 min: .int 101 # minimo di EDF
 max2: .int 0 # max di EDF (priorita')
 
-count: .int 0 # quante volte far girare i loop
-stmp: .int 0 # tiene conto di quale num variabile devo azzerare
+edf_count: .int 0 # quante volte far girare i loop
+edf_stmp: .int 0 # tiene conto di quale num variabile devo azzerare
 
-countmin: .int 0 # conta quanti minimi trova (EDF)
+edf_countmin: .int 0 # conta quanti minimi trova (EDF)
 
-riga_da_stampare: .long 0 # indirizzo stack della riga da stampare
-toDelete: .int 0
+edf_riga_da_stampare: .long 0 # indirizzo stack della riga da stampare
+edf_toDelete: .int 0
 
 .section .text
     .global edf 
@@ -25,30 +25,30 @@ toDelete: .int 0
 .type edf, @function
 
 edf: 
-    movl %ebp, basePointer_funzione # salvo stack pointer funzione
+    movl %ebp, edf_basePointer_funzione # salvo stack pointer funzione
     # salvo parametri
-    movl %ebx, lines
+    movl %ebx, edf_lines
 
     # imposto nuovo basePointer
     movl %eax, %ebp
 
     # INIZIALIZZO IL CONTATORE
-    movl lines, %eax
-    movl %eax, count
+    movl edf_lines, %eax
+    movl %eax, edf_count
 
-    # NB: LINES VALE 1 IN PIU' DI QUANTO DEVO DECREMENTARE LO STACK
+    # NB: edf_lines VALE 1 IN PIU' DI QUANTO DEVO DECREMENTARE LO STACK
     movl $4, %edx # grandezza di una riga dello stack
 
-    decl %eax # quindi decremento eax (ha valore lines) di 1
+    decl %eax # quindi decremento eax (ha valore edf_lines) di 1
 
     mull %edx # es: se ho 3 linee, e' come se facessi $4 * (3-1) = 8 --> 8(%ebp)
 
     addl %eax, %ebp # adesso ebp punta alla prima riga che avevo messo sullo stack
 
     # SALVO EBP CHE PUNTA ALLA PRIMA VARIABILE IN FONDO ALLO STACK 
-    movl %ebp, basePointer
+    movl %ebp, edf_basePointer
 
-    movl lines, %ecx
+    movl edf_lines, %ecx
 
     # pulisco i registri
     xorl %eax, %eax
@@ -56,7 +56,7 @@ edf:
     xorl %edx, %edx
 
 primo_loop_EDF: # RICERCA DEL MINIMO TRA LE RIGHE
-    movl %ecx, count
+    movl %ecx, edf_count
     movl (%ebp), %eax # leggo valore dallo stack
 
     # SE LA RIGA CHE STO CONTROLLANDO E' VUOTA, SALTO TALE GIRO DI LOOP
@@ -74,15 +74,15 @@ primo_loop_EDF: # RICERCA DEL MINIMO TRA LE RIGHE
 skip_primo_loop_EDF:
     subl $4, %ebp # salgo di stack
 
-    movl count, %ecx
+    movl edf_count, %ecx
     loop primo_loop_EDF
 
 fine_primo_loop_EDF: # ARRIVATI QUI, IN min HO IL MINIMO TRA LE RIGHE
     # ------------------ DEVO CAPIRE QUANTE RIGHE POSSIEDONO IL MINIMO TROVATO ----------------------
-    movl basePointer, %ebp # ripristino stack pointer
+    movl edf_basePointer, %ebp # ripristino stack pointer
 
-    movl lines, %ecx
-    movl %ecx, count
+    movl edf_lines, %ecx
+    movl %ecx, edf_count
 
     # pulisco i registri
     xorl %eax, %eax
@@ -90,7 +90,7 @@ fine_primo_loop_EDF: # ARRIVATI QUI, IN min HO IL MINIMO TRA LE RIGHE
     xorl %edx, %edx
 
 check_min_EDF:
-    movl %ecx, count
+    movl %ecx, edf_count
     movl (%ebp), %eax # leggo valore dallo stack
 
     # SE LA RIGA CHE STO CONTROLLANDO E' VUOTA, SALTO TALE GIRO DI LOOP
@@ -103,33 +103,33 @@ check_min_EDF:
     cmpl min, %eax 
     jne skip_check_min_EDF
     # ho trovato una riga che ha il minimo attuale
-    incw countmin # aumento il contatore
+    incw edf_countmin # aumento il contatore
 
     movl (%ebp), %eax            
-    movl %eax, riga_da_stampare  # salva il num a 32bit in riga_da_stampare
+    movl %eax, edf_riga_da_stampare  # salva il num a 32bit in edf_riga_da_stampare
 
-    movl stmp, %eax # salvo il num di variabile
-    movl %eax, toDelete
+    movl edf_stmp, %eax # salvo il num di variabile
+    movl %eax, edf_toDelete
 
 skip_check_min_EDF:
     subl $4, %ebp # salgo di stack
 
-    incl stmp
-    movl count, %ecx
+    incl edf_stmp
+    movl edf_count, %ecx
     loop check_min_EDF
 
 seconda_parte_EDF: # CONTROLLO DELLE PRIORITA' (NEL CASO IL MINIMO E' PIU' DI 1)
-    movl basePointer, %ebp # ripristino stack pointer
+    movl edf_basePointer, %ebp # ripristino stack pointer
 
     # CONTROLLO SE DEVO ESEGUIRE IL SECONDO LOOP O MENO
-    movl countmin, %eax
+    movl edf_countmin, %eax
     cmpl $2, %eax
     jl fine_EDF # se ho solo un minimo vado diretto a stampare
 
     # --------------------- CASO IN CUI DEVO FARE IL SECONDO CHECK (PRIORITA') ------------------------
-    movl lines, %ecx
-    movl %ecx, count
-    movl $0, stmp # azzero
+    movl edf_lines, %ecx
+    movl %ecx, edf_count
+    movl $0, edf_stmp # azzero
 
     # pulisco i registri
     xorl %eax, %eax
@@ -137,7 +137,7 @@ seconda_parte_EDF: # CONTROLLO DELLE PRIORITA' (NEL CASO IL MINIMO E' PIU' DI 1)
     xorl %edx, %edx
 
 secondo_loop_EDF: # RICERCA DELLA PRIORITA' PIU' ALTA (SOLO DEI MINIMI)
-    movl %ecx, count
+    movl %ecx, edf_count
     movl (%ebp), %eax # leggo valore dallo stack
 
     # SE LA RIGA CHE STO CONTROLLANDO E' VUOTA, SALTO TALE GIRO DI LOOP
@@ -158,31 +158,30 @@ secondo_loop_EDF: # RICERCA DELLA PRIORITA' PIU' ALTA (SOLO DEI MINIMI)
     # in eax ho la priorita'
 
     cmpl max2, %eax 
-    jge skip_secondo_loop_EDF
+    jle skip_secondo_loop_EDF
 
     # se eax e' minore di max2, salvo il nuovo max2
     movl %eax, max2
     
     movl (%ebp), %eax            
-    movl %eax, riga_da_stampare  # salva il num a 32bit in riga_da_stampare
+    movl %eax, edf_riga_da_stampare  # salva il num a 32bit in edf_riga_da_stampare
 
-    movl stmp, %eax # salvo il num di variabile
-    movl %eax, toDelete
+    movl edf_stmp, %eax # salvo il num di variabile
+    movl %eax, edf_toDelete
     # anche se avessi due righe con la stessa priorita', stampo sempre l'ultima che trovo, siccome non ha importanza
 
 skip_secondo_loop_EDF:
     subl $4, %ebp # salgo di stack
 
-    incl stmp
-    movl count, %ecx
+    incl edf_stmp
+    movl edf_count, %ecx
     loop secondo_loop_EDF
 
 fine_EDF:
     # prima azzero la riga di stack che devo stampare
-    movl basePointer, %ebp # ripristino stack pointer
+    movl edf_basePointer, %ebp # ripristino stack pointer
 
-    movl toDelete, %ecx
-    decl %ecx # tolgo 1 siccome all'ultimo ciclo aggiunge di nuovo
+    movl edf_toDelete, %ecx
     cmpl $0, %ecx
     je skip_shift_stack
     # salgo di stack in base a che variabile devo togliere
@@ -193,17 +192,17 @@ shift_stack:
 skip_shift_stack:
     movl $0, (%ebp) # azzero tale area di memoria
 
-    movl basePointer_funzione, %ebp # ripristino ebp
-    movl riga_da_stampare, %eax # devo ritornare : riga_da_stampare
+    movl edf_basePointer_funzione, %ebp # ripristino ebp
+    movl edf_riga_da_stampare, %eax # devo ritornare : edf_riga_da_stampare
     
     # azzero
     movl $101, min
     movl $0, max2
-    movl $0, count
-    movl $0, stmp
-    movl $0, countmin
-    movl $0, riga_da_stampare
-    movl $0, toDelete
+    movl $0, edf_count
+    movl $0, edf_stmp
+    movl $0, edf_countmin
+    movl $0, edf_riga_da_stampare
+    movl $0, edf_toDelete
 
     ret 
 
