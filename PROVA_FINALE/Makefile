@@ -1,6 +1,6 @@
 # file per creare una toolchain di compilazione
 
-EXE= bin/main.x # nome del file eseguibile che si vuole creare
+EXE= main.x # nome del file eseguibile che si vuole creare
 
 # variabile per specificare i compilatori da usare
 AS= as --32 # compilatore di assembly a 32 bit
@@ -8,7 +8,7 @@ LD= ld -m elf_i386 # linker di assembly
 FLAGS= -gstabs # parametri che vengono passati al compilatore per certi comportamenti
 # in questo caso, abilitiamo il tool di debug
 
-OBJ= obj/convert.o obj/edf.o obj/main.o obj/menu.o obj/printfd.o obj/printvideo.o obj/readl.o obj/revert.o obj/scanfd.o # dichiaro file oggetto
+OBJ= main.o convert.o edf.o menu.o printfd.o printvideo.o readl.o revert.o scanfd.o # dichiaro file oggetto
 
 # il mio target e' l'eseguibile
 # $(..) indica il valore della variabile
@@ -16,40 +16,38 @@ OBJ= obj/convert.o obj/edf.o obj/main.o obj/menu.o obj/printfd.o obj/printvideo.
 $(EXE):  $(OBJ) # perche' esista l'exe deve esistere il file oggetto
 	$(LD) -o $(EXE) $(OBJ) 
 
-obj/convert.o: src/convert.s
-	$(AS) $(FLAGS) -o obj/convert.o src/convert.s
+main.o: main.s
+	$(AS) $(FLAGS) -o main.o main.s
+	
+convert.o: convert.s
+	$(AS) $(FLAGS) -o convert.o convert.s
 
-obj/edf.o: src/edf.s
-	$(AS) $(FLAGS) -o obj/edf.o src/edf.s
+edf.o: edf.s
+	$(AS) $(FLAGS) -o edf.o edf.s
 
-obj/main.o: src/main.s
-	$(AS) $(FLAGS) -o obj/main.o src/main.s
+menu.o: menu.s
+	$(AS) $(FLAGS) -o menu.o menu.s
 
-obj/menu.o: src/menu.s
-	$(AS) $(FLAGS) -o obj/menu.o src/menu.s
+printfd.o: printfd.s
+	$(AS) $(FLAGS) -o printfd.o printfd.s
 
-obj/printfd.o: src/printfd.s
-	$(AS) $(FLAGS) -o obj/printfd.o src/printfd.s
+printvideo.o: printvideo.s
+	$(AS) $(FLAGS) -o printvideo.o printvideo.s
 
-obj/printvideo.o: src/printvideo.s
-	$(AS) $(FLAGS) -o obj/printvideo.o src/printvideo.s
+readl.o: readl.s
+	$(AS) $(FLAGS) -o readl.o readl.s
 
-obj/readl.o: src/readl.s
-	$(AS) $(FLAGS) -o obj/readl.o src/readl.s
+revert.o: revert.s
+	$(AS) $(FLAGS) -o revert.o revert.s
 
-obj/revert.o: src/revert.s
-	$(AS) $(FLAGS) -o obj/revert.o src/revert.s
-
-obj/scanfd.o: src/scanfd.s
-	$(AS) $(FLAGS) -o obj/scanfd.o src/scanfd.s
+scanfd.o: scanfd.s
+	$(AS) $(FLAGS) -o scanfd.o scanfd.s
 
 clean:
-	rm -f $(EXE) core
-	rm -f obj/*.o
+	rm -f *.o $(EXE) core
 
-r: 
+r:
 	./$(EXE)
-
 # VADO NELLA CONSOLE
 # ho fatto il mio file assembly
 # make
