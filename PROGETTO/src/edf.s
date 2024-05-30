@@ -178,8 +178,6 @@ skip_secondo_loop_EDF:
     loop secondo_loop_EDF
 
 fine_EDF:
-    # devo ritornare : riga_da_stampare
-
     # prima azzero la riga di stack che devo stampare
     movl basePointer, %ebp # ripristino stack pointer
 
@@ -195,14 +193,16 @@ shift_stack:
 skip_shift_stack:
     movl $0, (%ebp) # azzero tale area di memoria
 
-    movl basePointer_funzione, %ebp
-    movl riga_da_stampare, %eax
+    movl basePointer_funzione, %ebp # ripristino ebp
+    movl riga_da_stampare, %eax # devo ritornare : riga_da_stampare
     
     # azzero
     movl $101, min
     movl $0, max2
+    movl $0, count
     movl $0, stmp
     movl $0, countmin
+    movl $0, riga_da_stampare
     movl $0, toDelete
 
     ret 

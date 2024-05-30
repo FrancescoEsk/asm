@@ -27,13 +27,18 @@ zeroFile_len: .long . - zeroFile
 troppiFile: .ascii "Errore: Troppi parametri forniti\n"
 troppiFile_len: .long . - troppiFile
 
+conclusione: .ascii "Conclusione: "
+conclusione_len: .long . - conclusione
+
+badString: .ascii "Penalty: "
+badString_len: .long . - badString
 
 # VARIABILI PER ALGORITMO
 slottemporali: .int 0
-penality: .int 0
+penalty: .long 0
 algo: .int 0
 
-riga_da_printare: .long 0 # indirizzo stack della riga da stampare
+riga_da_printare: .long 0 # riga da stampare a 32 bit
 output_algoritmo: .ascii ""
 
 giri_algoritmo: .int 0
@@ -211,7 +216,7 @@ stampa: # STAMPA RIGA SCELTA DA ALGORITMO
     movl slottemporali, %edx
     subl %edx, %eax
     cmpl $0, %eax 
-    jge skip_penality # se non sono in ritardo, salto calcolo penalita'
+    jge skip_penalty # se non sono in ritardo, salto calcolo penalita'
 
     movl %eax, %edx # uso edx (siccome non lo usa revert)
     movl riga_da_printare, %eax
@@ -221,12 +226,10 @@ stampa: # STAMPA RIGA SCELTA DA ALGORITMO
     mulb %dl # moltiplico il tempo di ritardo per la penalita'
     
     # lo sommo alla penalita' totale
-    addl penality, %eax
-    movl %eax, penality
+    addl penalty, %eax
+    movl %eax, penalty
 
-skip_penality:
-    # ------------ AZZERO LA RIGA DELLO STACK STAMPATA -----------
-
+skip_penalty:
     # DECREMENTO IL NUM DI GIRI ALGORITMO (PERCHE' HO 'TOLTO' UNA LINEA DA CONTROLLARE)
     decl giri_algoritmo
 
@@ -236,12 +239,41 @@ stampa_file: # STAMPA RIGA SU FILE DA ALGORITMO EDF
     
 
 ricomincia:
-    # se ci sono ancora righe da stampare (----------------- DA AGGIUNGERE !!! --------------)
+    # pulisco stringa di output
+
+reset_output_algoritmo: # PULIZIA STRINGA 
+    movl $10, %ecx
+    movl $output_algoritmo, %ebx
+resetoutput_algoritmo_loop:
+    movb $0, (%ebx)
+    incl %ebx
+    loop resetoutput_algoritmo_loop
+
+    # se ci sono ancora righe da stampare 
     movl giri_algoritmo, %eax
     cmpl $0, %eax
     jne scelta_algoritmo
 
-    # altrimenti restarto l'algoritmo
+    # altrimenti restarto l'algoritmo, dopo la stampa delle ultime righe
+    # stampa Conclusione:
+    movl $4, %eax 
+    movl $0, %ebx
+    leal conclusione, %ecx
+    movl conclusione_len, %edx
+    int $0x80
+
+    movl slottemporali, %eax
+    call printfd
+
+    # stampa Penalty: 
+    movl $4, %eax 
+    movl $0, %ebx
+    leal badString, %ecx
+    movl badString_len, %edx
+    int $0x80
+
+    movl penalty, %eax
+    call printfd
 
 # restart_algoritmo:
     # DEVO PULIRE LO STACK DALLE LINEE CHE AVEVO INSERITO
@@ -255,7 +287,7 @@ pulisci_stack:
     movl $0, lines
     movl $0, index
     movl $0, slottemporali
-    movl $0, penality
+    movl $0, penalty
 
     jmp apriFile # ricomincio rileggendo il file
 
