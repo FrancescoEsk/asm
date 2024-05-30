@@ -29,9 +29,7 @@ print_alg2:
     .ascii "You selected HPF algorithm\n"
 print_alg2_len:
     .long . - print_alg2
-
-valore_ebx:
-
+    
 
 .section .text
 .global menu
