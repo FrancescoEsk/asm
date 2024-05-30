@@ -1,5 +1,4 @@
-# namefile: menu.s
-
+# MENU SCELTA ALGORITMO 
 
 .section .data
 
@@ -7,13 +6,6 @@ richiesta:
     .ascii "Select algorithm (0 = exit, 1 = EDF, 2 = HPF) -> "
 richiesta_len:
     .long . - richiesta
-
-# Il numero inserito dall'utente viene salvato qui
-num_inserito:
-    .ascii "0000"
-num_inserito_len:
-    .long . - num_inserito
-
 
 print_exit:
     .ascii "You selected exit\n"
@@ -37,8 +29,6 @@ print_alg2_len:
 .type menu, @function
 
 menu:
-
-stampa_richiesta:
     movl $4, %eax                   # chiamo la WRITE per scrivere "Select algorithm" contenuto nell'etichetta richiesta
     movl $1, %ebx                   # esco dalla syscall
     leal richiesta, %ecx      
@@ -56,9 +46,10 @@ inserimento:
     cmpl $2, %eax
     je stampa_due
 
-    jmp stampa_richiesta
+    jmp menu
 
 stampa_zero:
+    pushl %eax
     movl $4, %eax                   # chiamo la WRITE per scrivere "You selected EDF algorithm" contenuto nell'etichetta richiesta
     movl $1, %ebx                   # esco dalla syscall
     leal print_exit, %ecx      
@@ -67,6 +58,7 @@ stampa_zero:
     jmp exit
 
 stampa_uno:
+    pushl %eax
     movl $4, %eax                   # chiamo la WRITE per scrivere "You selected EDF algorithm" contenuto nell'etichetta richiesta
     movl $1, %ebx                   # esco dalla syscall
     leal print_alg1, %ecx      
@@ -75,13 +67,15 @@ stampa_uno:
     jmp exit
 
 stampa_due:
+    pushl %eax
     movl $4, %eax                   # chiamo la WRITE per scrivere "You selected HPF algorithm" contenuto nell'etichetta richiesta
     movl $1, %ebx                   # esco dalla syscall
     leal print_alg2, %ecx      
     movl print_alg2_len, %edx
     int $0x80
-
-
+ 
 exit:
+    popl %eax
+    
     ret
 

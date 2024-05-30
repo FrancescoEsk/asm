@@ -30,11 +30,14 @@ troppiFile_len: .long . - troppiFile
 
 # VARIABILI PER ALGORITMO
 slottemporali: .int 0
+penality: .int 0
 algo: .int 0
 
 riga_da_printare: .long 0 # indirizzo stack della riga da stampare
 output_algoritmo: .ascii ""
 stackDelete: .long 0
+
+giri_algoritmo: .int 0
 
 .section .bss
 
@@ -139,20 +142,25 @@ close_file: # CHIUSURA FILE
     movl fd, %ebx
     int $0x80
 
-menu:
+stampa_menu:
     # ARRIVATI QUI, LO STACK CONTIENE I VALORI DELLE RIGHE DEL FILE
-    # NUMERO RIGHE FILE CONTENUTO IN 'lines' (contatore)
+    # NUMERO RIGHE FILE CONTENUTO IN 'lines' (contatore) -> setto quindi il num giri dell'algoritmo
+    movl lines, %eax
+    movl %eax, giri_algoritmo
 
-    # ---------------------------- INSERIRE STAMPA MENU' PER SCELTA ALGORITMO ----------------------------
+    call menu
+    # in eax ho l'input da utente
+    cmpl $0, %eax
+    je exit
+    # se l'utente, quindi, ha inserito 1 o 2 (edf o hpf)
+    decl %eax
+    movl %eax, algo # decremento e salvo in algo
 
 scelta_algoritmo:
-    # scelta algoritmo modifica la var. 'algo' che vale 0 se si sceglie edf, e 1 se si sceglie hpf
-    
-    # ---------------------- DA TOGLIERE I COMMENTI --------------------
-
-    # movl algo, %eax
-    # cmpl $0, %eax
-    # jne hpf
+    # scelta algoritmo si basa sulla var. 'algo' che vale 0 se si sceglie edf, e 1 se si sceglie hpf
+    movl algo, %eax
+    cmpl $0, %eax
+    jne algoritmo_hpf
 
 algoritmo_edf:
     # scelta EDF
@@ -201,11 +209,32 @@ stampa: # STAMPA RIGA SCELTA DA ALGORITMO
     movl %eax, slottemporali
 
     # --------------- CALCOLO PENALITA' ---------------
-    
+    movl riga_da_printare, %eax
+    movl $3, %edx # prendo scadenza
+    call revert
+    movl slottemporali, %edx
+    subl %eax, %edx
+    cmpl $0, %edx
+    jge skip_penality
 
+    movl riga_da_printare, %eax
+    movl $4, %ebx # prendo priorita'
+    call revert
+
+    mulb %dl # moltiplico il tempo di ritardo per la penalita'
+    
+    # lo sommo alla penalita' totale
+    movl penality, %ebx
+    addl %eax, %ebx
+    movl %ebx, penality
+
+skip_penality:
     # ------------ AZZERO LA RIGA DELLO STACK STAMPATA -----------
     movl stackDelete, %eax
     movl $0, (%eax)
+
+    # DECREMENTO IL NUM DI GIRI ALGORITMO (PERCHE' HO 'TOLTO' UNA LINEA DA CONTROLLARE)
+    decl giri_algoritmo
 
     jmp ricomincia
 
@@ -214,13 +243,28 @@ stampa_file: # STAMPA RIGA SU FILE DA ALGORITMO EDF
 
 ricomincia:
     # se ci sono ancora righe da stampare (----------------- DA AGGIUNGERE !!! --------------)
-    
-    jmp scelta_algoritmo
+    movl giri_algoritmo, %eax
+    cmpl $0, %eax
+    jne scelta_algoritmo
 
-    # altrimenti ristampo il menu'
-    jmp menu
+    # altrimenti restarto l'algoritmo
 
-    
+# restart_algoritmo:
+    # DEVO PULIRE LO STACK DALLE LINEE CHE AVEVO INSERITO
+    movl lines, %ecx
+
+pulisci_stack:
+    popl %eax
+    loop pulisci_stack
+
+    # azzero le var per ricominciare
+    movl $0, lines
+    movl $0, index
+    movl $0, slottemporali
+    movl $0, penality
+
+    jmp apriFile # ricomincio rileggendo il file
+
 exit_erroreFile: # MESSAGGI DI ERRORE
     movl $4, %eax
     movl $1, %ebx
