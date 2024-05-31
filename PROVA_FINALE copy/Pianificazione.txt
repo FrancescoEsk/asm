@@ -1,0 +1,16 @@
+Pianificazione EDF:
+30:0
+10:15
+20:35
+40:40
+Conclusione: 70
+Penalty: 175
+
+Pianificazione HPF:
+30:0
+40:15
+10:45
+20:65
+Conclusione: 70
+Penalty: 165
+

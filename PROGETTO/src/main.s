@@ -437,7 +437,7 @@ stampa_ultime_righe_file:
 stampa_ultime_righe:
     # stampa Conclusione:
     movl $4, %eax 
-    movl $0, %ebx
+    movl $1, %ebx
     leal conclusione, %ecx
     movl conclusione_len, %edx
     int $0x80
@@ -448,7 +448,7 @@ stampa_ultime_righe:
 
     # stampa Penalty: 
     movl $4, %eax 
-    movl $0, %ebx
+    movl $1, %ebx
     leal badString, %ecx
     movl badString_len, %edx
     int $0x80
@@ -456,9 +456,9 @@ stampa_ultime_righe:
     movl penalty, %eax
     movl $0, %ebx
     call printfd
-
+    
     movl $4, %eax 
-    movl $0, %ebx
+    movl $1, %ebx
     leal newline, %ecx # scrivo \n finale
     movl $1, %edx
     int $0x80
