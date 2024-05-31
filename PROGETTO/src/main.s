@@ -222,24 +222,31 @@ stampa: # STAMPA RIGA SCELTA DA ALGORITMO
     movl %eax, slottemporali
 
     # --------------- CALCOLO PENALITA' ---------------
-    movl riga_da_printare, %eax
+    movl riga_da_printare, %eax  # 32bit riga stampata
     movl $3, %ebx # prendo scadenza
-    call revert
-    movl slottemporali, %edx
-    subl %edx, %eax
+    call revert  # scadenza in eax
+    movl slottemporali, %edx 
+    subl %edx, %eax # slot temporali - scadenza -> risultato in eax
     cmpl $0, %eax 
-    jge skip_penalty # se non sono in ritardo, salto calcolo penalita'
+    # se il risultato e' positivo quelli sono i giorni di ritardo passati
+    jle skip_penalty # se non sono in ritardo, salto calcolo penalita'
+                     # se eax e' minore o uguale di zero salta
+
+    # quindi li moltiplico per la priorita'
 
     movl %eax, %edx # uso edx (siccome non lo usa revert)
+    # sposto i giorni di ritardo in edx
     movl riga_da_printare, %eax
     movl $4, %ebx # prendo priorita'
     call revert
 
     mulb %dl # moltiplico il tempo di ritardo per la penalita'
+    # priorita' * edx (giorni di ritardo) -> risultato in eax
     
     # lo sommo alla penalita' totale
     addl penalty, %eax
     movl %eax, penalty
+    # e lo aggiorno in memoria
 
 skip_penalty:
     # DECREMENTO IL NUM DI GIRI ALGORITMO (PERCHE' HO 'TOLTO' UNA LINEA DA CONTROLLARE)
