@@ -50,9 +50,6 @@ clean:
 	rm -f $(EXE) core
 	rm -f obj/*.o
 
-r: 
-	./$(EXE)
-
 # VADO NELLA CONSOLE
 # ho fatto il mio file assembly
 # make
