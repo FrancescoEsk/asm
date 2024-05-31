@@ -214,6 +214,12 @@ stampa: # STAMPA RIGA SCELTA DA ALGORITMO
     leal output_algoritmo, %ecx
     int $0x80
 
+    jmp dopo_stampa
+
+stampa_file: # STAMPA RIGA SU FILE DA ALGORITMO EDF
+    
+
+dopo_stampa:
     #  AUMENTO SLOT TEMPORALI
     movl riga_da_printare, %eax
     movl $2, %ebx
@@ -226,16 +232,13 @@ stampa: # STAMPA RIGA SCELTA DA ALGORITMO
     movl $3, %ebx # prendo scadenza
     call revert  # scadenza in eax
     movl slottemporali, %edx 
-    subl %edx, %eax # slot temporali - scadenza -> risultato in eax
-    cmpl $0, %eax 
+    subl %eax, %edx # slot temporali - scadenza -> risultato in eax
+    cmpl $0, %edx 
     # se il risultato e' positivo quelli sono i giorni di ritardo passati
     jle skip_penalty # se non sono in ritardo, salto calcolo penalita'
                      # se eax e' minore o uguale di zero salta
 
     # quindi li moltiplico per la priorita'
-
-    movl %eax, %edx # uso edx (siccome non lo usa revert)
-    # sposto i giorni di ritardo in edx
     movl riga_da_printare, %eax
     movl $4, %ebx # prendo priorita'
     call revert
@@ -251,11 +254,6 @@ stampa: # STAMPA RIGA SCELTA DA ALGORITMO
 skip_penalty:
     # DECREMENTO IL NUM DI GIRI ALGORITMO (PERCHE' HO 'TOLTO' UNA LINEA DA CONTROLLARE)
     decw giri_algoritmo
-
-    jmp ricomincia
-
-stampa_file: # STAMPA RIGA SU FILE DA ALGORITMO EDF
-    
 
 ricomincia:
     # pulisco stringa di output

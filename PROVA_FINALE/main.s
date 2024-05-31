@@ -1,8 +1,3 @@
-# funzione che legge un file
-
-# PARAMETRI
-# EBX = file.txt
-
 .section .data
 
 # VARIABILI PER LETTURA FILE
@@ -16,7 +11,15 @@ lines: .int 0 # num linee
 # VAR CHE DICE SE DEVO STAMPARE A VIDEO O SCRIVERE SU FILE (0: A VIDEO, 1: SU FILE)
 secondfile: .int 0 
 # FILE SU CUI SCRIVERE OUTPUT ALGORITMO
-file2: .ascii ""
+file2: .long 0  # max 100 char di percorso file
+fd2: .int 0 #file descriptor del secondo file
+
+# STRINGHE DA STAMPARE A VIDEO
+print_alg1: .ascii "Pianificazione EDF:\n"
+print_alg1_len: .long . - print_alg1
+
+print_alg2: .ascii "Pianificazione HPF:\n"
+print_alg2_len: .long . - print_alg2
 
 erroreFile: .ascii "Errore: apertura file fallita\n"
 erroreFile_len: .long . - erroreFile
@@ -42,8 +45,6 @@ giri_algoritmo: .int 0
 
 riga_da_printare: .long 0 # riga da stampare a 32 bit
 output_algoritmo: .byte 10
-
-.section .bss
 
 .section .text
     .global _start
@@ -171,6 +172,86 @@ stampa_menu:
     # se l'utente, quindi, ha inserito 1 o 2 (edf o hpf)
     decl %eax
     movl %eax, algo # decremento e salvo in algo
+    
+    # STAMPA Pianificazione ...:
+    cmpl $1, %eax
+    je stampa_stringa_hpf_file # vado ad hpf
+
+    # ------------------ edf -----------------------
+    # controllo se devo stampare a video o su file
+    movl secondfile, %eax
+    cmpl $1, %eax
+    jne stampa_stringa_edf
+    # ------------------ stampa su file (edf) ---------------------
+stampa_stringa_edf_file:
+    # apertura file
+    movl $5, %eax        
+    movl file2, %ebx  
+    movl $0x441, %ecx  # flags per aprire il file ( O_WRONLY | O_CREAT | O_APPEND ) 
+    movl $600, %edx  # modalità per creare il file ( S_IRUSR | S_IWUSR )
+    int $0x80      
+
+    movl %eax, fd2      # salvo il file descriptor
+    # scrittura
+    movl $4, %eax    
+    movl fd2, %ebx # fd del file in cui devo scrivere  
+    leal print_alg1, %ecx      
+    movl print_alg1_len, %edx
+    int $0x80            
+
+    # chiusura file
+    movl $6, %eax   
+    movl fd2, %ebx     
+    int $0x80            
+
+    jmp scelta_algoritmo
+
+stampa_stringa_edf:
+    # ------------------ stampa a video (edf) ---------------------
+    movl $4, %eax                   
+    movl $1, %ebx                   
+    leal print_alg1, %ecx      
+    movl print_alg1_len, %edx
+    int $0x80
+
+    jmp scelta_algoritmo
+
+stampa_stringa_hpf_file: # hpf
+    # controllo se devo stampare a video o su file
+    movl secondfile, %eax
+    cmpl $1, %eax
+    jne stampa_stringa_hpf
+    # ------------------ stampa su file (hpf) ---------------------
+
+    # apertura file
+    movl $5, %eax        
+    movl file2, %ebx  
+    movl $0x441, %ecx  # flags per aprire il file ( O_WRONLY | O_CREAT | O_APPEND ) 
+    movl $600, %edx  # modalità per creare il file ( S_IRUSR | S_IWUSR )
+    int $0x80      
+
+    movl %eax, fd2      # salvo il file descriptor
+    # scrittura
+    movl $4, %eax    
+    movl fd2, %ebx # fd del file in cui devo scrivere  
+    leal print_alg2, %ecx      
+    movl print_alg2_len, %edx
+    int $0x80            
+
+    # chiusura file
+    movl $6, %eax   
+    movl fd2, %ebx     
+    int $0x80     
+
+    jmp scelta_algoritmo       
+
+stampa_stringa_hpf:
+    # ------------------ stampa a video (hpf) ---------------------
+    movl $4, %eax                   
+    movl $1, %ebx                   
+    leal print_alg2, %ecx      
+    movl print_alg2_len, %edx
+    int $0x80
 
 scelta_algoritmo:
     # scelta algoritmo si basa sulla var. 'algo' che vale 0 se si sceglie edf, e 1 se si sceglie hpf
@@ -203,7 +284,7 @@ stampa: # STAMPA RIGA SCELTA DA ALGORITMO
     je stampa_file
 
     # ----------------- STAMPA A VIDEO -----------------
-    # stampa identificativo
+    # stampa identificativo:slot_inizio
     movl riga_da_printare, %eax
     movl slottemporali, %ebx
     leal output_algoritmo, %ecx
@@ -212,8 +293,43 @@ stampa: # STAMPA RIGA SCELTA DA ALGORITMO
     movl $4, %eax
     movl $1, %ebx
     leal output_algoritmo, %ecx
+    # edx gia' popolato da funzione
     int $0x80
 
+    jmp dopo_stampa
+
+stampa_file: # STAMPA RIGA SU FILE DA ALGORITMO EDF
+    # NB: se il file non esiste, viene creato. successivamente, le scritture sono in append, quindi non sovrascrivono mai il file.
+
+    # apertura file
+    movl $5, %eax        
+    movl file2, %ebx  
+    movl $0x441, %ecx  # flags per aprire il file ( O_WRONLY | O_CREAT | O_APPEND ) 
+    movl $600, %edx  # modalità per creare il file ( S_IRUSR | S_IWUSR )
+    int $0x80      
+
+    movl %eax, fd2      # salvo il file descriptor
+
+    # stampa identificativo:slot_inizio
+    movl riga_da_printare, %eax
+    movl slottemporali, %ebx
+    leal output_algoritmo, %ecx
+    call printvideo
+    # output_algoritmo da stampare lenght in edx (stringa gia' modificata da funzione)
+
+    # scrittura
+    movl $4, %eax    
+    movl fd2, %ebx # fd del file in cui devo scrivere  
+    leal output_algoritmo, %ecx
+    # edx gia' popolato da funzione
+    int $0x80            
+
+    # chiusura file
+    movl $6, %eax   
+    movl fd2, %ebx     
+    int $0x80            
+
+dopo_stampa:
     #  AUMENTO SLOT TEMPORALI
     movl riga_da_printare, %eax
     movl $2, %ebx
@@ -226,16 +342,13 @@ stampa: # STAMPA RIGA SCELTA DA ALGORITMO
     movl $3, %ebx # prendo scadenza
     call revert  # scadenza in eax
     movl slottemporali, %edx 
-    subl %edx, %eax # slot temporali - scadenza -> risultato in eax
-    cmpl $0, %eax 
+    subl %eax, %edx # slot temporali - scadenza -> risultato in eax
+    cmpl $0, %edx 
     # se il risultato e' positivo quelli sono i giorni di ritardo passati
     jle skip_penalty # se non sono in ritardo, salto calcolo penalita'
                      # se eax e' minore o uguale di zero salta
 
     # quindi li moltiplico per la priorita'
-
-    movl %eax, %edx # uso edx (siccome non lo usa revert)
-    # sposto i giorni di ritardo in edx
     movl riga_da_printare, %eax
     movl $4, %ebx # prendo priorita'
     call revert
@@ -251,11 +364,6 @@ stampa: # STAMPA RIGA SCELTA DA ALGORITMO
 skip_penalty:
     # DECREMENTO IL NUM DI GIRI ALGORITMO (PERCHE' HO 'TOLTO' UNA LINEA DA CONTROLLARE)
     decw giri_algoritmo
-
-    jmp ricomincia
-
-stampa_file: # STAMPA RIGA SU FILE DA ALGORITMO EDF
-    
 
 ricomincia:
     # pulisco stringa di output
@@ -274,6 +382,59 @@ resetoutput_algoritmo_loop:
     jne scelta_algoritmo
 
     # altrimenti restarto l'algoritmo, dopo la stampa delle ultime righe
+    # controllo se devo stampare a video o su file
+    movl secondfile, %eax
+    cmpl $0, %eax
+    je stampa_ultime_righe
+stampa_ultime_righe_file:
+    # qui devo stampare su file
+    # NB: se il file non esiste, viene creato. successivamente, le scritture sono in append, quindi non sovrascrivono mai il file.
+
+    # apertura file
+    movl $5, %eax        
+    movl file2, %ebx  
+    movl $0x441, %ecx  # flags per aprire il file ( O_WRONLY | O_CREAT | O_APPEND ) 
+    movl $600, %edx  # modalità per creare il file ( S_IRUSR | S_IWUSR )
+    int $0x80      
+
+    movl %eax, fd2      # salvo il file descriptor
+
+    # scrittura Conclusione:
+    movl $4, %eax    
+    movl fd2, %ebx # fd del file in cui devo scrivere  
+    leal conclusione, %ecx
+    movl conclusione_len, %edx
+    int $0x80            
+
+    movl slottemporali, %eax
+    movl fd2, %ebx
+    call printfd
+
+    # scrittura Penalty: 
+    movl $4, %eax 
+    movl fd2, %ebx
+    leal badString, %ecx
+    movl badString_len, %edx
+    int $0x80
+
+    movl penalty, %eax
+    movl fd2, %ebx
+    call printfd
+
+    movl $4, %eax 
+    movl fd2, %ebx
+    leal newline, %ecx # scrivo \n finale
+    movl $1, %edx
+    int $0x80
+
+    # chiusura file
+    movl $6, %eax   
+    movl fd2, %ebx     
+    int $0x80     
+
+    jmp restart_algoritmo       
+
+stampa_ultime_righe:
     # stampa Conclusione:
     movl $4, %eax 
     movl $0, %ebx
@@ -282,6 +443,7 @@ resetoutput_algoritmo_loop:
     int $0x80
 
     movl slottemporali, %eax
+    movl $0, %ebx
     call printfd
 
     # stampa Penalty: 
@@ -292,9 +454,16 @@ resetoutput_algoritmo_loop:
     int $0x80
 
     movl penalty, %eax
+    movl $0, %ebx
     call printfd
 
-# restart_algoritmo:
+    movl $4, %eax 
+    movl $0, %ebx
+    leal newline, %ecx # scrivo \n finale
+    movl $1, %edx
+    int $0x80
+
+restart_algoritmo:
     # DEVO PULIRE LO STACK DALLE LINEE CHE AVEVO INSERITO
     movl lines, %ecx
 

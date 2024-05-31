@@ -1,9 +1,12 @@
-# converts an integer into a string
+# converte il contenuto di eax in un ascii intero, e lo stampa
 # il numero da stampare deve essere messo in EAX
+# EBX contiene il dove stampare (0 = a video, il resto viene inteso con file descriptor)
 
 .section .data
 car:
 	.byte 0
+
+printfd_fd: .int 0
 
 .section .text
 	.global printfd
@@ -12,6 +15,7 @@ car:
 
 printfd:
 	movl $0, %ecx              # azzera il contatore ECX
+	movl %ebx, printfd_fd
 
 continua_a_dividere:
 
@@ -45,7 +49,7 @@ stampa:
 	pushw %bx
 
 	movl $4, %eax
-	movl $1, %ebx
+	movl printfd_fd, %ebx
 	leal car, %ecx
 	movl $1, %edx
 	int $0x80
@@ -57,7 +61,7 @@ fine_itoa:
 	movb $10, car 
 
 	movl $4, %eax
-	movl $1, %ebx
+	movl printfd_fd, %ebx
 	leal car, %ecx
 	movl $1, %edx
 	int $0x80
