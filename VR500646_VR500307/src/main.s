@@ -191,9 +191,9 @@ inserimento_menu: # ottengo input utente
     jmp menu
 
 stampa_zero: # se deve uscire, stampo stringa di uscita
-    movl $4, %eax                   
-    movl $1, %ebx                   
-    leal print_exit, %ecx      
+    movl $4, %eax         
+    movl $1, %ebx         
+    leal print_exit, %ecx 
     movl print_exit_len, %edx
     int $0x80
 
