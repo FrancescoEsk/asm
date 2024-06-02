@@ -15,12 +15,6 @@ file2: .long 0  # max 100 char di percorso file
 fd2: .int 0 #file descriptor del secondo file
 
 # STRINGHE DA STAMPARE A VIDEO
-richiesta: .ascii "Select algorithm (0 = exit, 1 = EDF, 2 = HPF) -> "
-richiesta_len: .long . - richiesta
-
-print_exit: .ascii "You selected exit\n"
-print_exit_len: .long . - print_exit
-
 print_alg1: .ascii "Pianificazione EDF:\n"
 print_alg1_len: .long . - print_alg1
 
@@ -171,35 +165,10 @@ stampa_menu:
     movl lines, %eax
     movl %eax, giri_algoritmo
 
-menu:
-    # stampa richiesta
-    movl $4, %eax
-    movl $1, %ebx
-    leal richiesta, %ecx
-    movl richiesta_len, %edx
-    int $0x80
-
-inserimento_menu: # ottengo input utente
-    call scanfd                     # il valore letto va in EAX
+    call menu
+    # in eax ho l'input da utente
     cmpl $0, %eax
-    je stampa_zero
-    cmpl $1, %eax
-    je menu_finish
-    cmpl $2, %eax
-    je menu_finish
-
-    jmp menu
-
-stampa_zero: # se deve uscire, stampo stringa di uscita
-    movl $4, %eax                   
-    movl $1, %ebx                   
-    leal print_exit, %ecx      
-    movl print_exit_len, %edx
-    int $0x80
-
-    jmp exit
-
-menu_finish:
+    je exit
     # se l'utente, quindi, ha inserito 1 o 2 (edf o hpf)
     decl %eax
     movl %eax, algo # decremento e salvo in algo

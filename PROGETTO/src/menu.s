@@ -1,6 +1,9 @@
 # STAMPA MENU SCELTA ALGORITMO (e acquisizione da tastiera)
 .section .data
 
+menu_fix: .ascii "Questo risolve il problema\n"
+menu_fix_len: .long . - menu_fix
+
 richiesta: .ascii "Select algorithm (0 = exit, 1 = EDF, 2 = HPF) -> "
 richiesta_len: .long . - richiesta
 
@@ -13,13 +16,14 @@ print_exit_len: .long . - print_exit
 .type menu, @function
 
 menu:
-    movl $4, %eax                   
-    movl $1, %ebx                   
-    leal richiesta, %ecx      
+    # stampa richiesta
+    movl $4, %eax
+    movl $1, %ebx
+    leal richiesta, %ecx
     movl richiesta_len, %edx
     int $0x80
 
-inserimento: 
+inserimento: # ottengo input utente
     call scanfd                     # il valore letto va in EAX
     cmpl $0, %eax
     je stampa_zero
@@ -30,7 +34,7 @@ inserimento:
 
     jmp menu
 
-stampa_zero:
+stampa_zero: # se deve uscire, stampo stringa di uscita
     pushl %eax
     movl $4, %eax                   
     movl $1, %ebx                   
@@ -39,6 +43,6 @@ stampa_zero:
     int $0x80
     popl %eax
  
-exit:
+exit: # return del valore inserito dall'utente, in eax
     ret
 
