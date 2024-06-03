@@ -1,56 +1,59 @@
 .section .data
 
-# VARIABILI PER LETTURA FILE
-riga: .space 20 # buffer abbastanza grande da contenere una riga (20 caratteri)
-index: .int 0 # indice per tenere traccia della posizione in cui scrivere il carattere in 'riga'
-buffer: .string ""
-fd: .int 0
-newline: .byte 10 # valore ascii di '\n'
-lines: .int 0 # num linee
+    # VARIABILI PER LETTURA FILE
+    riga: .space 20 # buffer abbastanza grande da contenere una riga (20 caratteri)
+    index: .int 0 # indice per tenere traccia della posizione in cui scrivere il carattere in 'riga'
+    buffer: .string ""
+    fd: .int 0
+    newline: .byte 10 # valore ascii di '\n'
+    lines: .int 0 # num linee
 
-# VAR CHE DICE SE DEVO STAMPARE A VIDEO O SCRIVERE SU FILE (0: A VIDEO, 1: SU FILE)
-secondfile: .int 0 
-# FILE SU CUI SCRIVERE OUTPUT ALGORITMO
-file2: .long 0  # max 100 char di percorso file
-fd2: .int 0 #file descriptor del secondo file
+    # VAR CHE DICE SE DEVO STAMPARE A VIDEO O SCRIVERE SU FILE (0: A VIDEO, 1: SU FILE)
+    secondfile: .int 0 
+    # FILE SU CUI SCRIVERE OUTPUT ALGORITMO
+    file2: .long 0  # max 100 char di percorso file
+    fd2: .int 0 #file descriptor del secondo file
 
-# STRINGHE DA STAMPARE A VIDEO
-richiesta: .ascii "Select algorithm (0 = exit, 1 = EDF, 2 = HPF) -> "
-richiesta_len: .long . - richiesta
+    # STRINGHE DA STAMPARE A VIDEO
+    richiesta: .ascii "Select algorithm (0 = exit, 1 = EDF, 2 = HPF) -> "
+    richiesta_len: .long . - richiesta
 
-print_exit: .ascii "You selected exit\n"
-print_exit_len: .long . - print_exit
+    print_exit: .ascii "You selected exit\n"
+    print_exit_len: .long . - print_exit
 
-print_alg1: .ascii "Pianificazione EDF:\n"
-print_alg1_len: .long . - print_alg1
+    print_alg1: .ascii "Pianificazione EDF:\n"
+    print_alg1_len: .long . - print_alg1
 
-print_alg2: .ascii "Pianificazione HPF:\n"
-print_alg2_len: .long . - print_alg2
+    print_alg2: .ascii "Pianificazione HPF:\n"
+    print_alg2_len: .long . - print_alg2
 
-erroreFile: .ascii "Errore: apertura file fallita\n"
-erroreFile_len: .long . - erroreFile
+    erroreFile: .ascii "Errore: Apertura file fallita\n"
+    erroreFile_len: .long . - erroreFile
 
-zeroFile: .ascii "Errore: Nessun parametro fornito\n"
-zeroFile_len: .long . - zeroFile
+    zeroFile: .ascii "Errore: Nessun parametro fornito\n"
+    zeroFile_len: .long . - zeroFile
 
-troppiFile: .ascii "Errore: Troppi parametri forniti\n"
-troppiFile_len: .long . - troppiFile
+    troppiFile: .ascii "Errore: Troppi parametri forniti\n"
+    troppiFile_len: .long . - troppiFile
 
-conclusione: .ascii "Conclusione: "
-conclusione_len: .long . - conclusione
+    fileVuoto: .ascii "Errore: File fornito vuoto\n"
+    fileVuoto_len: .long . - fileVuoto
 
-badString: .ascii "Penalty: "
-badString_len: .long . - badString
+    conclusione: .ascii "Conclusione: "
+    conclusione_len: .long . - conclusione
 
-# VARIABILI PER ALGORITMO
-slottemporali: .int 0
-penalty: .long 0
-algo: .int 0
+    badString: .ascii "Penalty: "
+    badString_len: .long . - badString
 
-giri_algoritmo: .int 0
+    # VARIABILI PER ALGORITMO
+    slottemporali: .int 0
+    penalty: .long 0
+    algo: .int 0
 
-riga_da_printare: .long 0 # riga da stampare a 32 bit
-output_algoritmo: .byte 10
+    giri_algoritmo: .int 0
+
+    riga_da_printare: .long 0 # riga da stampare a 32 bit
+    output_algoritmo: .byte 10
 
 .section .text
     .global _start
@@ -155,6 +158,12 @@ close_file: # CHIUSURA FILE
 
     # reset indice per la prossima riga (quando rileggero' il file)
     movl $0, index 
+
+    # controllo se il file fornito era vuoto o meno (TRAMITE lines)
+    # se lines vale 0, allora il file non conteneva una riga con  \n --> il che significa che era vuoto
+    movl lines, %eax
+    cmpl $0, %eax
+    je exit_fileVuoto
 
     xorl %eax, %eax
 reset_riga2: # PULIZIA STRINGA 
@@ -531,6 +540,16 @@ exit_troppiFile:
     leal troppiFile, %ecx
     movl troppiFile_len, %edx
     int $0x80
+
+    jmp exit
+
+exit_fileVuoto:
+    movl $4, %eax
+    movl $1, %ebx
+    leal fileVuoto, %ecx
+    movl fileVuoto_len, %edx
+    int $0x80
+
 
 exit: # CHIUSURA PROGRAMMA
     movl $1, %eax 
