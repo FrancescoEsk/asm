@@ -12,7 +12,7 @@
 
 # ESEMPIO DI ASCII CHE TRADUCE QUESTA FUNZIONE
 # str:
-#   .ascii "10,9,121,2\n"
+#   .ascii "10,9,80,2\n"
 
 .section .text
 .global readl

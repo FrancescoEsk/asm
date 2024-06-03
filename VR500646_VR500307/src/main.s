@@ -18,7 +18,7 @@
     richiesta: .ascii "Select algorithm (0 = exit, 1 = EDF, 2 = HPF) -> "
     richiesta_len: .long . - richiesta
 
-    print_exit: .ascii "You selected exit\n"
+    print_exit: .ascii "You selected exit.\n"
     print_exit_len: .long . - print_exit
 
     print_alg1: .ascii "Pianificazione EDF:\n"
@@ -27,17 +27,20 @@
     print_alg2: .ascii "Pianificazione HPF:\n"
     print_alg2_len: .long . - print_alg2
 
-    erroreFile: .ascii "Errore: Apertura file fallita\n"
+    erroreFile: .ascii "Errore: Apertura file fallita.\n"
     erroreFile_len: .long . - erroreFile
 
-    zeroFile: .ascii "Errore: Nessun parametro fornito\n"
+    zeroFile: .ascii "Errore: Nessun parametro fornito.\n"
     zeroFile_len: .long . - zeroFile
 
-    troppiFile: .ascii "Errore: Troppi parametri forniti\n"
+    troppiFile: .ascii "Errore: Troppi parametri forniti.\n"
     troppiFile_len: .long . - troppiFile
 
-    fileVuoto: .ascii "Errore: File fornito vuoto\n"
+    fileVuoto: .ascii "Errore: File fornito vuoto.\n"
     fileVuoto_len: .long . - fileVuoto
+
+    exceededLines: .ascii "Attenzione: Numero ordini forniti maggiore di 10. Rischio di superare i 100 slot temporali.\n\n"
+    exceededLines_len: .long . - exceededLines
 
     conclusione: .ascii "Conclusione: "
     conclusione_len: .long . - conclusione
@@ -165,6 +168,18 @@ close_file: # CHIUSURA FILE
     cmpl $0, %eax
     je exit_fileVuoto
 
+    # se il file contiene piu' di 10 ordini, stampo avviso
+    movl lines, %eax
+    cmpl $10, %eax
+    jle no_warning
+
+    movl $4, %eax
+    movl $1, %ebx
+    leal exceededLines, %ecx
+    movl exceededLines_len, %edx
+    int $0x80
+
+no_warning:
     xorl %eax, %eax
 reset_riga2: # PULIZIA STRINGA 
     movl $20, %ecx
@@ -549,7 +564,6 @@ exit_fileVuoto:
     leal fileVuoto, %ecx
     movl fileVuoto_len, %edx
     int $0x80
-
 
 exit: # CHIUSURA PROGRAMMA
     movl $1, %eax 
