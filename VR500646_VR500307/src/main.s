@@ -207,10 +207,8 @@ inserimento_menu: # ottengo input utente
     call scanfd                     # il valore letto va in EAX
     cmpl $0, %eax
     je stampa_zero
-    cmpl $1, %eax
-    je menu_finish
     cmpl $2, %eax
-    je menu_finish
+    jle menu_finish
 
     jmp menu
 
@@ -535,7 +533,7 @@ pulisci_stack:
 
 exit_erroreFile: # MESSAGGI DI ERRORE
     movl $4, %eax
-    movl $1, %ebx
+    movl $2, %ebx
     leal erroreFile, %ecx
     movl erroreFile_len, %edx
     int $0x80
@@ -543,7 +541,7 @@ exit_erroreFile: # MESSAGGI DI ERRORE
 
 exit_zeroFile: 
     movl $4, %eax
-    movl $1, %ebx
+    movl $2, %ebx
     leal zeroFile, %ecx
     movl zeroFile_len, %edx
     int $0x80
@@ -551,7 +549,7 @@ exit_zeroFile:
 
 exit_troppiFile:
     movl $4, %eax
-    movl $1, %ebx
+    movl $2, %ebx
     leal troppiFile, %ecx
     movl troppiFile_len, %edx
     int $0x80
@@ -560,7 +558,7 @@ exit_troppiFile:
 
 exit_fileVuoto:
     movl $4, %eax
-    movl $1, %ebx
+    movl $2, %ebx
     leal fileVuoto, %ecx
     movl fileVuoto_len, %edx
     int $0x80
