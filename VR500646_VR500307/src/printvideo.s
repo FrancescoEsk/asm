@@ -8,12 +8,13 @@
 
 .section .data
 
+old_temp: .long 0
 slot: .int 0
 stringa: .long 0
 index_temp: .long 0
 check: .int 0
 
-temp: .ascii "000"
+temp: .ascii "0000"
 
 .section .text
     .global printvideo
@@ -47,10 +48,10 @@ redo:
 
 conversione:
     leal temp, %esi # assegno ad esi l'indirizzo di mem della stringa
-    addl $2, %esi # faccio puntare esi alla terza cifra
+    addl $3, %esi # faccio puntare esi alla quarta cifra
 
     movl $10, %edx # divisore
-    movl $3, %ecx # loop di 3 (siccome il numero e' al massimo di 3 cifre)
+    movl $4, %ecx # loop di 4 (siccome il numero e' al massimo di 4 cifre)
 
 inizioCiclo:
     div %dl # divido per 10
@@ -68,7 +69,7 @@ inizioCiclo:
     leal temp, %eax
     movl stringa, %esi
     addl index_temp, %esi # carico index_temp stringa (aggiungo offset)
-    movl $3, %ecx
+    movl $4, %ecx
     jmp scrittura_stringa
 
 skip1:
