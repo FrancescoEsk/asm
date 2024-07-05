@@ -1,3 +1,0 @@
-as -gstabs -o main.o main.s 
-as -gstabs -o itoa.o itoa.s 
-ld itoa.o main.o -o esempio
